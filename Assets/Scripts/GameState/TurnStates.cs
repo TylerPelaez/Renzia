@@ -1,4 +1,4 @@
-﻿ public enum PlayerTurn
+﻿ public enum TurnStates
 {
     UNIT_UNSELECTED,
     UNIT_SELECTED,

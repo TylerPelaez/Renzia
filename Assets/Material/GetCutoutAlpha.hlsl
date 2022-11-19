@@ -14,12 +14,6 @@ void GetCutoutAlpha_float(float2 worldPosition, UnityTexture2D positionLookup, f
         float2 origin = worldPosition - offset;
         float2 end = origin + texelSize;
 
-        if (uv.x > 0.1 )
-        {
-            Out = 0;
-            return;
-        }
-
         if (position.x >= origin.x && position.x <= end.x)
         {
             float distance = sqrt(pow(position.x - worldPosition.x, 2) + pow(position.y - worldPosition.y, 2));

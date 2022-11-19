@@ -8,8 +8,10 @@ public class GameController : MonoBehaviour
 	
     void Start()
     {
+		stateMachine.Add(new PlayerTurnState(mapController, this));
+		stateMachine.Add(new EnemyTurnState(mapController, this));
+		
 		// Testin and Debuggin
-		stateMachine.Add(new PlayerTurnState(mapController));
 		stateMachine.SetCurrentState(GameState.PLAYER_TURN);
     }
 
@@ -21,5 +23,16 @@ public class GameController : MonoBehaviour
 	void Update()
 	{
 		stateMachine.Update();
+	}
+
+
+	public void OnPlayerTurnFinished()
+	{
+		stateMachine.SetCurrentState(GameState.ENEMY_TURN);
+	}
+
+	public void OnEnemyTurnFinished()
+	{
+		stateMachine.SetCurrentState(GameState.PLAYER_TURN);
 	}
 }

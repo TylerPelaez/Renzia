@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using Util;
 
 public class MapController : MonoBehaviour
 {
@@ -88,7 +89,8 @@ public class MapController : MonoBehaviour
 
     public Vector3Int WorldToCell(Vector3 worldPos)
     {
-        return grid.WorldToCell(worldPos);
+        // TODO: This prevents us from being able to move units to tiles with z > 0
+        return grid.WorldToCell(new Vector3(worldPos.x, worldPos.y, 0));
     }
 
     public Vector3 CellToWorld(Vector3Int cellPos)
@@ -96,15 +98,15 @@ public class MapController : MonoBehaviour
         return grid.CellToWorld(cellPos) + new Vector3(0f, 0.25f, 0f);
     }
 
-    public List<MapTile> GetAllTilesInRange(Vector3Int position, int maxDistance, bool includeStart)
+    public List<MapTile> GetAllTilesInRange(Vector3Int cellPosition, int maxDistance, bool includeStart)
     {
         Dictionary<Vector3Int, MapTile> visited = new Dictionary<Vector3Int, MapTile>();
-        DFS(visited, position, maxDistance);
+        DFS(visited, cellPosition, maxDistance);
 
         List<MapTile> result = new List<MapTile>();
         foreach (MapTile tile in visited.Values)
         {
-            if (tile.GridPos == position && !includeStart)
+            if (tile.GridPos == cellPosition && !includeStart)
             {
                 continue;
             }
@@ -114,23 +116,44 @@ public class MapController : MonoBehaviour
         return result;
     }
 
+    public List<MapTile> GetAllTilesInRange(Vector3 worldPosition, int maxDistance, bool includeStart)
+    {
+        // TODO: Fiz Z coord here?
+        Vector3Int cellPosition = WorldToCell(worldPosition);
+        return GetAllTilesInRange(cellPosition, maxDistance, includeStart);
+    }
+
+    private MapTile[] GetAdjacentTilesToPosition(Vector3Int cellPosition)
+    {
+        MapTile[] tiles = new MapTile[8];
+        tiles[0] = GetTileAtGridCellPosition(cellPosition + Vector3Int.left);
+        tiles[1] = GetTileAtGridCellPosition(cellPosition + Vector3Int.down);
+        tiles[2] = GetTileAtGridCellPosition(cellPosition + Vector3Int.right);
+        tiles[3] = GetTileAtGridCellPosition(cellPosition + Vector3Int.up);
+        tiles[4] = GetTileAtGridCellPosition(cellPosition + Vector3Int.left + Vector3Int.down);
+        tiles[5] = GetTileAtGridCellPosition(cellPosition + Vector3Int.right + Vector3Int.down);
+        tiles[6] = GetTileAtGridCellPosition(cellPosition + Vector3Int.left + Vector3Int.up);
+        tiles[7] = GetTileAtGridCellPosition(cellPosition + Vector3Int.right + Vector3Int.up);
+        return tiles;
+    }
+    
     private void DFS(Dictionary<Vector3Int, MapTile> visited, Vector3Int position, int range)
     {
-        visited.Add(position, GetTileAtGridCellPosition(position));
+        if (!visited.ContainsKey(position))
+        {
+            visited.Add(position, GetTileAtGridCellPosition(position));
+        }
+
         if (range == 0)
         {
             return;
         }
 
-        MapTile[] testTiles = new MapTile[4];
-        testTiles[0] = GetTileAtGridCellPosition(position + Vector3Int.left);
-        testTiles[1] = GetTileAtGridCellPosition(position + Vector3Int.down);
-        testTiles[2] = GetTileAtGridCellPosition(position + Vector3Int.right);
-        testTiles[3] = GetTileAtGridCellPosition(position + Vector3Int.up);
+        MapTile[] testTiles = GetAdjacentTilesToPosition(position);
 
         foreach (MapTile test in testTiles)
         {
-            if (test != null && !visited.ContainsKey(test.GridPos) && test.Walkable)
+            if (test != null && test.Walkable)
             {
                 DFS(visited, test.GridPos, range - 1);
             }
@@ -143,5 +166,74 @@ public class MapController : MonoBehaviour
     private MapTile GetTileAtGridCellPosition(Vector3Int gridCellPosition)
     {
         return map.ContainsKey(gridCellPosition) ? map[gridCellPosition] : null;
+    }
+
+    private LinkedList<Vector3Int> RetracePath(Dictionary<Vector3Int, Vector3Int> cameFrom, Vector3Int current)
+    {
+        LinkedList<Vector3Int> path = new LinkedList<Vector3Int>();
+        path.AddFirst(current);
+
+        while (cameFrom.ContainsKey(current))
+        {
+            current = cameFrom[current];
+            path.AddFirst(current);
+        }
+
+        return path;
+    }
+
+    private int GetCellDistance(Vector3Int a, Vector3Int b)
+    {
+        return Mathf.Max(Mathf.Abs(a.x - b.x), Mathf.Abs(a.y - b.y));
+    }
+
+    public List<Vector3Int> GetShortestPath(Vector3Int start, Vector3Int target)
+    {
+        var openSet = new PriorityQueue<Vector3Int, int>();
+        var itemsInOpenSet = new HashSet<Vector3Int>();
+        var cameFrom = new Dictionary<Vector3Int, Vector3Int>();
+        var gScore = new Dictionary<Vector3Int, int>();
+        var fScore = new Dictionary<Vector3Int, int>();
+        gScore[start] = 0;
+        fScore[start] = GetCellDistance(start, target);
+        openSet.Enqueue(start, fScore[start]);
+
+        while (openSet.Count > 0)
+        {
+            var current = openSet.Dequeue();
+            itemsInOpenSet.Remove(current);
+            if (current == target)
+            {
+                return new List<Vector3Int>(RetracePath(cameFrom, current));
+            }
+
+            var adjacentTiles = GetAdjacentTilesToPosition(current);
+            foreach (var tile in adjacentTiles)
+            {
+                if (tile == null || !tile.Walkable)
+                {
+                    continue;
+                }
+
+                Vector3Int neighbor = tile.GridPos;
+
+                var tentativeGScore = gScore[current] + 1;
+                if (!gScore.ContainsKey(neighbor) || tentativeGScore < gScore[neighbor])
+                {
+                    // This path to neighbor is better than any previous one, record it.
+                    cameFrom[neighbor] = current;
+                    gScore[neighbor] = tentativeGScore;
+                    fScore[neighbor] = tentativeGScore + GetCellDistance(neighbor, target);
+                    if (!itemsInOpenSet.Contains(neighbor))
+                    {
+                        openSet.Enqueue(neighbor, fScore[neighbor]);
+                        itemsInOpenSet.Add(neighbor);
+                    }
+                }
+            }
+        }
+
+        // No path exists, apparently
+        return null;
     }
 }

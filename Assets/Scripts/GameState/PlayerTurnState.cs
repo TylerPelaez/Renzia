@@ -1,51 +1,21 @@
-﻿using UnityEngine;
-
-public class PlayerTurnState : State<GameState>
+﻿public class PlayerTurnState : TurnState
 {
-    private FiniteStateMachine<PlayerTurn> turnStateMachine = new FiniteStateMachine<PlayerTurn>();
-    public Unit SelectedUnit { get; private set; }
-    private MapController mapController; 
-
-    public PlayerTurnState(MapController mapController) : base(GameState.PLAYER_TURN) 
+    public PlayerTurnState(MapController mapController, GameController gameController) : base(mapController, gameController, GameState.PLAYER_TURN) 
     {
-        this.mapController = mapController;
-        turnStateMachine.Add(new UnitUnselectedState(this));
-        turnStateMachine.Add(new UnitSelectedState(this, mapController));
-        turnStateMachine.SetCurrentState(PlayerTurn.UNIT_UNSELECTED);
+        turnStateMachine.Add(new PlayerUnitUnselectedState(this));
+        turnStateMachine.Add(new PlayerUnitSelectedState(this, mapController));
     }
 
     public override void Enter()
     {
         base.Enter();
+        // Debug
+        turnStateMachine.SetCurrentState(TurnStates.UNIT_UNSELECTED);
     }
 
-    public override void Exit()
+    public override void OnUnitTurnFinished()
     {
-        base.Exit();
-    }
-
-    public override void FixedUpdate()
-    {
-        base.FixedUpdate();
-        turnStateMachine.FixedUpdate();
-    }
-
-    public override void Update()
-    {
-        base.Update();
-        turnStateMachine.Update();
-    }
-
-    public void OnUnitSelected(Unit selected)
-    {
-        if (selected == null)
-        {
-            SelectedUnit = null;
-            turnStateMachine.SetCurrentState(PlayerTurn.UNIT_UNSELECTED);
-            return; // TODO: Deselect is working?
-        }
-
-        SelectedUnit = selected;
-        turnStateMachine.SetCurrentState(PlayerTurn.UNIT_SELECTED);
+        base.OnUnitTurnFinished();
+        gameController.OnPlayerTurnFinished();
     }
 }

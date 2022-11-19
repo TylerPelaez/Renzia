@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 public class FiniteStateMachine<T> 
 {
@@ -37,11 +38,13 @@ public class FiniteStateMachine<T>
         }
         if (currentState != null)
         {
+            // Debug.Log("Leaving state " + currentState.ID);
             currentState.Exit();
         }
         currentState = state;
         if (currentState != null)
         {
+            // Debug.Log("Entering state " + state.ID);
             currentState.Enter();
         }
     }
