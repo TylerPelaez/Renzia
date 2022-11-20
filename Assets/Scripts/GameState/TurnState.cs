@@ -42,4 +42,14 @@
         SelectedUnit = null;
         turnStateMachine.SetCurrentState(TurnStates.UNIT_UNSELECTED);
     }
+
+    
+    public virtual bool CanSpendActionPoints(int amount)
+    {
+        return false;
+    }
+    public virtual void SpendActionPoints(int amount)
+    {
+        return;
+    }
 }

@@ -1,7 +1,4 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-
-public class UnitSelectedState : State<TurnStates>
+﻿public class UnitSelectedState : State<TurnStates>
 {
     protected TurnState turnFSM;
     protected MapController mapController;

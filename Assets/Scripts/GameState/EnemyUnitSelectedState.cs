@@ -40,7 +40,7 @@ public class EnemyUnitSelectedState : UnitSelectedState
         }
         
         Vector3Int targetPosition = shortestPath[0];
-        for (int i = 0; i <= SelectedUnit.totalMovement; i++)
+        for (int i = 0; i <= SelectedUnit.TotalMovement; i++)
         {
             targetPosition = shortestPath[i];
             // the last value in shortest path is the tile the player is standing on, second to last is where this unit should go

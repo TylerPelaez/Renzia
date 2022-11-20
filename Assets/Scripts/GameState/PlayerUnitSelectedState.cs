@@ -7,6 +7,7 @@ public class PlayerUnitSelectedState : UnitSelectedState
     private GameObject movementIndicatorPrefab;
     protected List<MapTile> tilesInMovementRange;
     private List<GameObject> movementIndicators;
+    private List<Unit> targetableUnits;
 
 
     public PlayerUnitSelectedState(PlayerTurnState turnFSM, MapController mapController) : base(turnFSM, mapController)
@@ -28,7 +29,7 @@ public class PlayerUnitSelectedState : UnitSelectedState
         base.Enter();
         Vector3 unitPos = SelectedUnit.gameObject.transform.position;
         
-        tilesInMovementRange = mapController.GetAllTilesInRange(unitPos, SelectedUnit.totalMovement, false);
+        tilesInMovementRange = mapController.GetAllTilesInRange(unitPos, SelectedUnit.TotalMovement, false);
 
         Vector3 offset = 2 * Vector3.forward;
         movementIndicators = new List<GameObject>(tilesInMovementRange.Count);
@@ -46,7 +47,8 @@ public class PlayerUnitSelectedState : UnitSelectedState
             GameObject.Destroy(indicator);    
         }
 
-        movementIndicators = new List<GameObject>();
+        movementIndicators = null;
+        targetableUnits = null;
     }
 
     public override void Update()
@@ -55,6 +57,38 @@ public class PlayerUnitSelectedState : UnitSelectedState
         
         if (Input.GetButtonDown("Select"))
         {
+            // if an enemy was clicked on, then see if attackable first
+            Collider2D overlap = Physics2D.OverlapPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition), LayerMask.GetMask("EnemyUnit"));
+            if (overlap != null && overlap.gameObject != null)
+            {
+                Unit unit = overlap.gameObject.GetComponent<Unit>();
+                if (unit == null)
+                {
+                    Debug.LogError("Enemy selected unit but there is no Unit Component!");
+                    return;
+                }
+                
+                // Attack enemy
+                if (!turnFSM.CanSpendActionPoints(1) )
+                {
+                    return;
+                }
+
+                Vector3Int enemyPosition = mapController.WorldToCell(unit.transform.position);
+                Vector3Int playerPosition = mapController.WorldToCell(SelectedUnit.transform.position);
+
+                float distance = Mathf.Sqrt(Mathf.Pow(playerPosition.x - enemyPosition.x, 2) + Mathf.Pow(playerPosition.y - enemyPosition.y, 2));
+                if (distance < SelectedUnit.AttackRange)
+                {
+                    unit.TakeDamage(SelectedUnit.AttackDamage);
+                    turnFSM.SpendActionPoints(1);
+                    turnFSM.OnUnitTurnFinished();
+                }
+
+                return;
+            }
+            
+            // otherwise, try moving to the place clicked on
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 1));
             Vector3Int cellPosition = mapController.WorldToCell(worldPos);
             foreach (var tile in tilesInMovementRange)

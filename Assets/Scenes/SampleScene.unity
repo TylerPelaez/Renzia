@@ -154,7 +154,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d38480b22c2e99e46baf4137985d4b43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalMovement: 3
+  <TotalMovement>k__BackingField: 3
+  <AttackRange>k__BackingField: 10
 --- !u!212 &239789377
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -222,8 +223,8 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!61 &239789379
-BoxCollider2D:
+--- !u!60 &239789379
+PolygonCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -235,7 +236,7 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0.75}
+  m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.125}
@@ -245,9 +246,15 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  serializedVersion: 2
-  m_Size: {x: 1, y: 2}
-  m_EdgeRadius: 0
+  m_Points:
+    m_Paths:
+    - - {x: -0.49444103, y: 0.000074863434}
+      - {x: -0.00004696846, y: -0.24821901}
+      - {x: 0.49465728, y: 0.0013113022}
+      - {x: 0.117240906, y: 0.19496012}
+      - {x: 0.11692977, y: 0.49611712}
+      - {x: -0.123322606, y: 0.49581385}
+      - {x: -0.123193026, y: 0.18873978}
 --- !u!1 &272555608
 GameObject:
   m_ObjectHideFlags: 0
@@ -520,7 +527,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d38480b22c2e99e46baf4137985d4b43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalMovement: 4
+  <TotalMovement>k__BackingField: 5
+  <AttackRange>k__BackingField: 10
 --- !u!1 &491263380
 GameObject:
   m_ObjectHideFlags: 0
