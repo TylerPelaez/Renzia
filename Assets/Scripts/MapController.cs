@@ -236,4 +236,13 @@ public class MapController : MonoBehaviour
         // No path exists, apparently
         return null;
     }
+
+    public bool CanUnitAttack(Unit attacker, Unit target)
+    {
+        Vector3Int attackerPosition = WorldToCell(attacker.transform.position);
+        Vector3Int targetPosition = WorldToCell(target.transform.position);
+
+        float distance = Mathf.Sqrt(Mathf.Pow(attackerPosition.x - targetPosition.x, 2) + Mathf.Pow(attackerPosition.y - targetPosition.y, 2));
+        return distance < attacker.AttackRange;
+    }
 }

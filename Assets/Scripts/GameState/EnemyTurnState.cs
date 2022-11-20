@@ -12,10 +12,4 @@
         // Debug
         turnStateMachine.SetCurrentState(TurnStates.UNIT_UNSELECTED);
     }
-    
-    public override void OnUnitTurnFinished()
-    {
-        base.OnUnitTurnFinished();
-        gameController.OnEnemyTurnFinished();
-    }
 }

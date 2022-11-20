@@ -1,18 +1,44 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
+using Object = System.Object;
 
 public class GameController : MonoBehaviour
 {
 	public GameObject sceneCamera;
 	public MapController mapController;
 	private FiniteStateMachine<GameState> stateMachine = new FiniteStateMachine<GameState>();
+
+	private LinkedList<Unit> initiativeOrder;
 	
     void Start()
     {
 		stateMachine.Add(new PlayerTurnState(mapController, this));
 		stateMachine.Add(new EnemyTurnState(mapController, this));
+		stateMachine.Add(new State<GameState>(GameState.TRANSITION));
+
 		
-		// Testin and Debuggin
-		stateMachine.SetCurrentState(GameState.PLAYER_TURN);
+		Unit[] allUnits = GameObject.FindObjectsOfType<Unit>();
+		List<Unit> orderedUnits = new List<Unit>(allUnits);
+		orderedUnits.Sort((firstUnit, secondUnit) => secondUnit.Initiative.CompareTo(firstUnit.Initiative));
+		initiativeOrder = new LinkedList<Unit>();
+
+		foreach (var unit in orderedUnits)
+		{
+			initiativeOrder.AddLast(unit);
+			unit.OnDeath += OnUnitDeath;
+		}
+
+		Unit currentUnit = GetCurrentTurnUnit();
+		switch (currentUnit.Team)
+		{
+			case Team.PLAYER:
+				stateMachine.SetCurrentState(GameState.PLAYER_TURN);
+				break;
+			case Team.ENEMY:
+				stateMachine.SetCurrentState(GameState.ENEMY_TURN);
+				break;
+		}
     }
 
 	void FixedUpdate()
@@ -26,13 +52,40 @@ public class GameController : MonoBehaviour
 	}
 
 
-	public void OnPlayerTurnFinished()
+	public void OnUnitTurnFinished()
 	{
-		stateMachine.SetCurrentState(GameState.ENEMY_TURN);
+		Unit finishedUnit = GetCurrentTurnUnit();
+		initiativeOrder.RemoveFirst();
+		initiativeOrder.AddLast(finishedUnit);
+
+		Unit currentUnit = GetCurrentTurnUnit();
+		
+		stateMachine.SetCurrentState(GameState.TRANSITION);
+		
+		switch (currentUnit.Team)
+		{
+			case Team.PLAYER:
+				stateMachine.SetCurrentState(GameState.PLAYER_TURN);
+				break;
+			case Team.ENEMY:
+				stateMachine.SetCurrentState(GameState.ENEMY_TURN);
+				break;
+		}
 	}
 
-	public void OnEnemyTurnFinished()
+	public Unit GetCurrentTurnUnit()
 	{
-		stateMachine.SetCurrentState(GameState.PLAYER_TURN);
+		return initiativeOrder.First.Value;
+	}
+
+	public void OnUnitDeath(Object unit, EventArgs args)
+	{
+		if (unit is not Unit)
+		{
+			Debug.LogError("Unit Death did not get a unit object!");
+			return;
+		}
+
+		initiativeOrder.Remove((Unit) unit);
 	}
 }

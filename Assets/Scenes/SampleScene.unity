@@ -156,6 +156,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <TotalMovement>k__BackingField: 3
   <AttackRange>k__BackingField: 10
+  <AttackDamage>k__BackingField: 4
+  <MaxHealth>k__BackingField: 5
+  <Health>k__BackingField: 0
+  <Initiative>k__BackingField: 11
+  <Team>k__BackingField: 1
 --- !u!212 &239789377
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -529,6 +534,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <TotalMovement>k__BackingField: 5
   <AttackRange>k__BackingField: 10
+  <AttackDamage>k__BackingField: 5
+  <MaxHealth>k__BackingField: 5
+  <Health>k__BackingField: 0
+  <Initiative>k__BackingField: 10
+  <Team>k__BackingField: 0
 --- !u!1 &491263380
 GameObject:
   m_ObjectHideFlags: 0

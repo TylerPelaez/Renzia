@@ -74,11 +74,8 @@ public class PlayerUnitSelectedState : UnitSelectedState
                     return;
                 }
 
-                Vector3Int enemyPosition = mapController.WorldToCell(unit.transform.position);
-                Vector3Int playerPosition = mapController.WorldToCell(SelectedUnit.transform.position);
-
-                float distance = Mathf.Sqrt(Mathf.Pow(playerPosition.x - enemyPosition.x, 2) + Mathf.Pow(playerPosition.y - enemyPosition.y, 2));
-                if (distance < SelectedUnit.AttackRange)
+                
+                if (mapController.CanUnitAttack(SelectedUnit, unit))
                 {
                     unit.TakeDamage(SelectedUnit.AttackDamage);
                     turnFSM.SpendActionPoints(1);

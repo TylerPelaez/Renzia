@@ -12,7 +12,16 @@ public class Unit : MonoBehaviour
 
     [field: SerializeField]
     public int MaxHealth { get; private set; } = 5;
-    [field: SerializeField] public int Health { get; private set; } = 0;
+    [field: SerializeField]
+    public int Health { get; private set; } = 0;
+    
+    [field: SerializeField]
+    public int Initiative { get; private set; } = 10;
+    
+    [field: SerializeField]
+    public Team Team { get; private set; } = Team.PLAYER;
+
+    public event EventHandler OnDeath;
     
     public void Start()
     {
@@ -24,6 +33,7 @@ public class Unit : MonoBehaviour
         Health -= amount;
         if (Health <= 0)
         {
+            OnDeath?.Invoke(this, EventArgs.Empty);
             // TODO: stuff on death
             Destroy(gameObject);
         }

@@ -2,7 +2,7 @@
 {
     protected FiniteStateMachine<TurnStates> turnStateMachine = new FiniteStateMachine<TurnStates>();
     protected MapController mapController;
-    protected GameController gameController;
+    private GameController gameController;
     
     public Unit SelectedUnit { get; private set; }
 
@@ -37,10 +37,11 @@
         turnStateMachine.SetCurrentState(TurnStates.UNIT_SELECTED);
     }
 
-    public virtual void OnUnitTurnFinished()
+    public void OnUnitTurnFinished()
     {
         SelectedUnit = null;
         turnStateMachine.SetCurrentState(TurnStates.UNIT_UNSELECTED);
+        gameController.OnUnitTurnFinished();
     }
 
     

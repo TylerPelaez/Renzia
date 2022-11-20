@@ -19,12 +19,6 @@ public class PlayerTurnState : TurnState
         turnStateMachine.SetCurrentState(TurnStates.UNIT_UNSELECTED);
     }
 
-    public override void OnUnitTurnFinished()
-    {
-        base.OnUnitTurnFinished();
-        gameController.OnPlayerTurnFinished();
-    }
-
     public override bool CanSpendActionPoints(int points)
     {
         return points <= ActionPoints;
