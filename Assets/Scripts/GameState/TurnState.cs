@@ -10,8 +10,21 @@
     {
         this.mapController = mapController;
         this.gameController = gameController;
+        turnStateMachine.Add(new State<TurnStates>(TurnStates.TRANSITION));
     }
 
+    public override void Enter()
+    {
+        base.Enter();
+        OnUnitSelected(gameController.GetCurrentTurnUnit());
+    }
+
+    public override void Exit()
+    {
+        base.Exit();
+        turnStateMachine.SetCurrentState(TurnStates.TRANSITION);
+    }
+    
     public override void FixedUpdate()
     {
         base.FixedUpdate();
@@ -26,13 +39,6 @@
 
     public void OnUnitSelected(Unit selected)
     {
-        if (selected == null)
-        {
-            SelectedUnit = null;
-            turnStateMachine.SetCurrentState(TurnStates.UNIT_UNSELECTED);
-            return; // TODO: Deselect is working?
-        }
-
         SelectedUnit = selected;
         turnStateMachine.SetCurrentState(TurnStates.UNIT_SELECTED);
     }
@@ -40,7 +46,6 @@
     public void OnUnitTurnFinished()
     {
         SelectedUnit = null;
-        turnStateMachine.SetCurrentState(TurnStates.UNIT_UNSELECTED);
         gameController.OnUnitTurnFinished();
     }
 

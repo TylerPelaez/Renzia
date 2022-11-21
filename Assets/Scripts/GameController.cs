@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Util;
 using Object = System.Object;
 
 public class GameController : MonoBehaviour
@@ -13,6 +14,9 @@ public class GameController : MonoBehaviour
 	
     void Start()
     {
+		AddressablesManager manager = AddressablesManager.Instance;
+		manager.OnLoadComplete += OnAddressablesLoadComplete;
+	    
 		stateMachine.Add(new PlayerTurnState(mapController, this));
 		stateMachine.Add(new EnemyTurnState(mapController, this));
 		stateMachine.Add(new State<GameState>(GameState.TRANSITION));
@@ -28,20 +32,9 @@ public class GameController : MonoBehaviour
 			initiativeOrder.AddLast(unit);
 			unit.OnDeath += OnUnitDeath;
 		}
-
-		Unit currentUnit = GetCurrentTurnUnit();
-		switch (currentUnit.Team)
-		{
-			case Team.PLAYER:
-				stateMachine.SetCurrentState(GameState.PLAYER_TURN);
-				break;
-			case Team.ENEMY:
-				stateMachine.SetCurrentState(GameState.ENEMY_TURN);
-				break;
-		}
     }
 
-	void FixedUpdate()
+    void FixedUpdate()
 	{
 		stateMachine.FixedUpdate();
 	}
@@ -51,6 +44,10 @@ public class GameController : MonoBehaviour
 		stateMachine.Update();
 	}
 
+	private void OnAddressablesLoadComplete(Object sender, EventArgs arg)
+	{
+		StartCurrentUnitTurn();
+	}
 
 	public void OnUnitTurnFinished()
 	{
@@ -58,10 +55,19 @@ public class GameController : MonoBehaviour
 		initiativeOrder.RemoveFirst();
 		initiativeOrder.AddLast(finishedUnit);
 
-		Unit currentUnit = GetCurrentTurnUnit();
-		
 		stateMachine.SetCurrentState(GameState.TRANSITION);
-		
+
+		StartCurrentUnitTurn();
+	}
+
+	public Unit GetCurrentTurnUnit()
+	{
+		return initiativeOrder.First.Value;
+	}
+
+	private void StartCurrentUnitTurn()
+	{
+		Unit currentUnit = GetCurrentTurnUnit();
 		switch (currentUnit.Team)
 		{
 			case Team.PLAYER:
@@ -71,11 +77,6 @@ public class GameController : MonoBehaviour
 				stateMachine.SetCurrentState(GameState.ENEMY_TURN);
 				break;
 		}
-	}
-
-	public Unit GetCurrentTurnUnit()
-	{
-		return initiativeOrder.First.Value;
 	}
 
 	public void OnUnitDeath(Object unit, EventArgs args)

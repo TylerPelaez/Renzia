@@ -20,7 +20,8 @@ MonoBehaviour:
   - m_GUID: 4adad45435d9fb34f901faf878664cd9
     m_Address: MovementIndicator
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - default
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 246614998b657d547883c6cf06b4d613, type: 2}
   m_SchemaSet:

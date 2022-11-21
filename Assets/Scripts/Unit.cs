@@ -21,6 +21,8 @@ public class Unit : MonoBehaviour
     [field: SerializeField]
     public Team Team { get; private set; } = Team.PLAYER;
 
+    public MapTile CurrentTile { get; set; }
+    
     public event EventHandler OnDeath;
     
     public void Start()

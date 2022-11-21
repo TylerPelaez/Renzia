@@ -20,6 +20,7 @@ public class MapController : MonoBehaviour
             Debug.LogError("No Grid assigned to MapController!");
             return;
         }
+        
 
         // First, grab the grid data and convert to map format
         tilemaps = grid.GetComponentsInChildren<Tilemap>();
@@ -63,7 +64,12 @@ public class MapController : MonoBehaviour
                 map[new Vector3Int(position.x, position.y, position.z)] = tile;
             }
         }
-       
+        
+        Unit[] units = FindObjectsOfType<Unit>();
+        foreach (var unit in units)
+        {
+            InitializeUnit(unit);
+        }
     }
 
     private void Update()
@@ -98,10 +104,10 @@ public class MapController : MonoBehaviour
         return grid.CellToWorld(cellPos) + new Vector3(0f, 0.25f, 0f);
     }
 
-    public List<MapTile> GetAllTilesInRange(Vector3Int cellPosition, int maxDistance, bool includeStart)
+    public List<MapTile> GetAllTilesInRange(Vector3Int cellPosition, int maxDistance, bool includeStart, bool includeOccupiedTiles)
     {
         Dictionary<Vector3Int, MapTile> visited = new Dictionary<Vector3Int, MapTile>();
-        DFS(visited, cellPosition, maxDistance);
+        DFS(visited, cellPosition, maxDistance, includeOccupiedTiles);
 
         List<MapTile> result = new List<MapTile>();
         foreach (MapTile tile in visited.Values)
@@ -116,11 +122,11 @@ public class MapController : MonoBehaviour
         return result;
     }
 
-    public List<MapTile> GetAllTilesInRange(Vector3 worldPosition, int maxDistance, bool includeStart)
+    public List<MapTile> GetAllTilesInRange(Vector3 worldPosition, int maxDistance, bool includeStart = false, bool includeOccupiedTiles = false)
     {
         // TODO: Fiz Z coord here?
         Vector3Int cellPosition = WorldToCell(worldPosition);
-        return GetAllTilesInRange(cellPosition, maxDistance, includeStart);
+        return GetAllTilesInRange(cellPosition, maxDistance, includeStart, includeOccupiedTiles);
     }
 
     private MapTile[] GetAdjacentTilesToPosition(Vector3Int cellPosition)
@@ -137,7 +143,7 @@ public class MapController : MonoBehaviour
         return tiles;
     }
     
-    private void DFS(Dictionary<Vector3Int, MapTile> visited, Vector3Int position, int range)
+    private void DFS(Dictionary<Vector3Int, MapTile> visited, Vector3Int position, int range, bool occupiedTilesAreWalkable)
     {
         if (!visited.ContainsKey(position))
         {
@@ -153,9 +159,9 @@ public class MapController : MonoBehaviour
 
         foreach (MapTile test in testTiles)
         {
-            if (test != null && test.Walkable)
+            if (test != null && test.Walkable && (occupiedTilesAreWalkable || test.CurrentUnit == null))
             {
-                DFS(visited, test.GridPos, range - 1);
+                DFS(visited, test.GridPos, range - 1, occupiedTilesAreWalkable);
             }
         }
     }
@@ -244,5 +250,22 @@ public class MapController : MonoBehaviour
 
         float distance = Mathf.Sqrt(Mathf.Pow(attackerPosition.x - targetPosition.x, 2) + Mathf.Pow(attackerPosition.y - targetPosition.y, 2));
         return distance < attacker.AttackRange;
+    }
+
+    public void InitializeUnit(Unit unit)
+    {
+        Vector3Int unitPosition = WorldToCell(unit.transform.position);
+        MapTile tile = map[unitPosition];
+        tile.CurrentUnit = unit;
+        unit.CurrentTile = tile;
+    }
+
+    public void MoveUnit(Unit unit, Vector3Int newPosition)
+    {
+        MapTile currentTile = unit.CurrentTile;
+        currentTile.CurrentUnit = null;
+        MapTile newTile = map[newPosition];
+        newTile.CurrentUnit = unit;
+        unit.CurrentTile = newTile;
     }
 }
