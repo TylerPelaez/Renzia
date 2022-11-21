@@ -22,17 +22,21 @@ public class Unit : MonoBehaviour
     public Team Team { get; private set; } = Team.PLAYER;
 
     public MapTile CurrentTile { get; set; }
+
+    public HealthBarUI healthBarUI;
     
     public event EventHandler OnDeath;
     
     public void Start()
     {
         Health = MaxHealth;
+        healthBarUI.SetHealth(Health, MaxHealth);
     }
 
     public void TakeDamage(int amount)
     {
         Health -= amount;
+        healthBarUI.SetHealth(Health, MaxHealth);
         if (Health <= 0)
         {
             OnDeath?.Invoke(this, EventArgs.Empty);

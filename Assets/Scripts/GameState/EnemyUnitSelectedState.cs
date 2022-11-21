@@ -61,7 +61,8 @@ public class EnemyUnitSelectedState : UnitSelectedState
         }
 
         SelectedUnit.transform.position = mapController.CellToWorld(targetPosition) + new Vector3(0, 0, 2);
-
+        mapController.MoveUnit(SelectedUnit, targetPosition);
+        
         return target;
     }
 

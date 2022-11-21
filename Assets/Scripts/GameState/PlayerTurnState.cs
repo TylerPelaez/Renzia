@@ -1,14 +1,19 @@
-﻿using UnityEngine;
+﻿using TMPro;
+using UnityEngine;
 
 public class PlayerTurnState : TurnState
 {
+    private TextMeshProUGUI actionPointLabel;
+    
     private int maxActionPoints = 4;
     public int ActionPoints { get; private set; }
     
-    public PlayerTurnState(MapController mapController, GameController gameController) : base(mapController, gameController, GameState.PLAYER_TURN) 
+    public PlayerTurnState(MapController mapController, GameController gameController) : base(mapController, gameController, GameState.PLAYER_TURN)
     {
+        actionPointLabel = gameController.actionPointLabel;
         turnStateMachine.Add(new PlayerUnitSelectedState(this, mapController));
         ActionPoints = maxActionPoints;
+        SetActionPointLabel();
     }
 
     public override bool CanSpendActionPoints(int points)
@@ -25,5 +30,11 @@ public class PlayerTurnState : TurnState
         }
 
         ActionPoints -= points;
+        SetActionPointLabel();
+    }
+
+    private void SetActionPointLabel()
+    {
+        actionPointLabel.text = "Action Points: " + ActionPoints;
     }
 }

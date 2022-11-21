@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using Util;
 using Object = System.Object;
@@ -8,6 +9,7 @@ public class GameController : MonoBehaviour
 {
 	public GameObject sceneCamera;
 	public MapController mapController;
+	public TextMeshProUGUI actionPointLabel;
 	private FiniteStateMachine<GameState> stateMachine = new FiniteStateMachine<GameState>();
 
 	private LinkedList<Unit> initiativeOrder;
