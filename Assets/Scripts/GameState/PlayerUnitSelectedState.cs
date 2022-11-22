@@ -8,21 +8,15 @@ public class PlayerUnitSelectedState : UnitSelectedState
     private List<GameObject> movementIndicators;
     private List<Unit> targetableUnits;
 
+    private bool hasMoved;
+    
     public PlayerUnitSelectedState(PlayerTurnState turnFSM, MapController mapController) : base(turnFSM, mapController) {}
 
     public override void Enter()
     {
         base.Enter();
-        Vector3 unitPos = SelectedUnit.gameObject.transform.position;
-        
-        tilesInMovementRange = mapController.GetAllTilesInRange(unitPos, SelectedUnit.TotalMovement);
-
-        Vector3 offset = 2 * Vector3.forward;
-        movementIndicators = new List<GameObject>(tilesInMovementRange.Count);
-        foreach (MapTile tile in tilesInMovementRange)
-        {
-            movementIndicators.Add(GameObject.Instantiate(AddressablesManager.Instance.Get("MovementIndicator"), mapController.CellToWorld(tile.GridPos) + offset, Quaternion.identity));
-        }
+        hasMoved = false;
+        UpdateMovementIndicators();
     }
 
     public override void Exit()
@@ -37,11 +31,38 @@ public class PlayerUnitSelectedState : UnitSelectedState
         targetableUnits = null;
     }
 
+    private void UpdateMovementIndicators()
+    {
+        // TODO: Pooling? maybe not needed if this isn't the final method used for movement
+        if (movementIndicators != null)
+        {
+            foreach (var indicator in movementIndicators)
+            {
+                GameObject.Destroy(indicator);
+            }
+        }
+
+        Vector3 unitPos = SelectedUnit.gameObject.transform.position;
+        
+        tilesInMovementRange = mapController.GetAllTilesInRange(unitPos, SelectedUnit.TotalMovement);
+
+        Vector3 offset = 2 * Vector3.forward;
+        movementIndicators = new List<GameObject>(tilesInMovementRange.Count);
+        foreach (MapTile tile in tilesInMovementRange)
+        {
+            movementIndicators.Add(GameObject.Instantiate(AddressablesManager.Instance.Get("MovementIndicator"), mapController.CellToWorld(tile.GridPos) + offset, Quaternion.identity));
+        }
+    }
+    
     public override void Update()
     {
         base.Update();
-        
-        if (Input.GetButtonDown("Select"))
+
+        if (Input.GetButtonDown("End Turn"))
+        {
+            turnFSM.OnUnitTurnFinished();
+        }
+        else if (Input.GetButtonDown("Select"))
         {
             // if an enemy was clicked on, then see if attackable first
             Collider2D overlap = Physics2D.OverlapPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition), LayerMask.GetMask("EnemyUnit"));
@@ -50,7 +71,7 @@ public class PlayerUnitSelectedState : UnitSelectedState
                 Unit unit = overlap.gameObject.GetComponent<Unit>();
                 if (unit == null)
                 {
-                    Debug.LogError("Enemy selected unit but there is no Unit Component!");
+                    Debug.LogError("Enemy unit selected but there is no Unit Component!");
                     return;
                 }
                 
@@ -64,10 +85,16 @@ public class PlayerUnitSelectedState : UnitSelectedState
                 if (mapController.CanUnitAttack(SelectedUnit, unit))
                 {
                     unit.TakeDamage(SelectedUnit.AttackDamage);
-                    turnFSM.SpendActionPoints(1);
-                    turnFSM.OnUnitTurnFinished();
+                    SpendActionPoints(1);
+                    UpdateMovementIndicators(); // Might've killed someone
                 }
 
+                return;
+            }
+
+            // First Move per turn is free, next one costs 1 AP
+            if (hasMoved && !turnFSM.CanSpendActionPoints(1))
+            {
                 return;
             }
             
@@ -78,12 +105,25 @@ public class PlayerUnitSelectedState : UnitSelectedState
             {
                 if (tile.GridPos == cellPosition)
                 {
-                    // valid position, move the unit there and end selected state for testing
                     SelectedUnit.gameObject.transform.position = mapController.CellToWorld(tile.GridPos) + new Vector3(0, 0, 2);
                     mapController.MoveUnit(SelectedUnit, tile.GridPos);
-                    turnFSM.OnUnitTurnFinished();
+                    if (hasMoved)
+                    {
+                        SpendActionPoints(1);
+                    }
+                    else
+                    {
+                        hasMoved = true;
+                        UpdateMovementIndicators();
+                    }
+                    return;
                 }
             }
         }
+    }
+
+    private void SpendActionPoints(int amount)
+    {
+        turnFSM.SpendActionPoints(amount);
     }
 }

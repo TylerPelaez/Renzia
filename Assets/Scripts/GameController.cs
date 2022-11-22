@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Util;
 using Object = System.Object;
 
 public class GameController : MonoBehaviour
 {
-	public GameObject sceneCamera;
 	public MapController mapController;
 	public TextMeshProUGUI actionPointLabel;
+	public Button endTurnButton;
 	private FiniteStateMachine<GameState> stateMachine = new FiniteStateMachine<GameState>();
 
 	private LinkedList<Unit> initiativeOrder;
@@ -89,6 +90,12 @@ public class GameController : MonoBehaviour
 			return;
 		}
 
+		mapController.OnUnitDeath((Unit) unit);
 		initiativeOrder.Remove((Unit) unit);
+	}
+
+	public LinkedList<Unit> GetAllUnits()
+	{
+		return initiativeOrder;
 	}
 }

@@ -10,7 +10,10 @@ public class EnemyUnitSelectedState : UnitSelectedState
     {
         base.Update();
         Unit target = Move();
-        Attack(target);
+        if (target != null)
+        {
+            Attack(target);
+        }
         
         // TODO: Animate stuff so enemy turn doesn't finish immediately.
         turnFSM.OnUnitTurnFinished();
@@ -45,7 +48,6 @@ public class EnemyUnitSelectedState : UnitSelectedState
         if (shortestPath == null || shortestPathLength == 2)
         {
             Debug.Log("Could not find path to unit!");
-            turnFSM.OnUnitTurnFinished();
             return target;
         }
         

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -6,6 +7,8 @@ using Util;
 public class MapController : MonoBehaviour
 {
     public Grid grid;
+    public GameController gameController;
+    public CameraController cameraController;
     private Tilemap[] tilemaps;
     private Dictionary<Vector3Int, MapTile> map;
 
@@ -65,6 +68,8 @@ public class MapController : MonoBehaviour
             }
         }
         
+        cameraController.Bounds = GetWorldBounds();
+
         Unit[] units = FindObjectsOfType<Unit>();
         foreach (var unit in units)
         {
@@ -74,6 +79,25 @@ public class MapController : MonoBehaviour
 
     private void Update()
     {
+        LinkedList<Unit> units = gameController.GetAllUnits();
+
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Texture2D texture = new Texture2D(units.Count + 1, 1, TextureFormat.RGBAFloat, -1, false);
+        texture.filterMode = FilterMode.Point;
+        Color color = new Color(mousePos.x, mousePos.y, mousePos.z);
+        texture.SetPixel(0, 0, color);
+        int index = 1;
+
+        foreach (var unit in units)
+        {
+            var position = unit.transform.position;
+            color = new Color(position.x, position.y + 0.25f, position.z);
+            texture.SetPixel(index, 0, color);
+            index++;
+        }
+        
+        texture.Apply();
+        
         foreach (Tilemap tilemap in tilemaps)
         {
             TilemapRenderer renderer = tilemap.gameObject.GetComponent<TilemapRenderer>();
@@ -81,15 +105,10 @@ public class MapController : MonoBehaviour
             {
                 continue;
             }
-            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Texture2D texture = new Texture2D(1, 1, TextureFormat.RGBAFloat, -1, false);
-            texture.filterMode = FilterMode.Point;
-            Color color = new Color(mousePos.x, mousePos.y, mousePos.z);
-            texture.SetPixel(0, 0, color);
-            texture.Apply();
+
 
             tilemap.gameObject.GetComponent<TilemapRenderer>().material.SetTexture("_CutoutPositionLookup", texture);
-            tilemap.gameObject.GetComponent<TilemapRenderer>().material.SetFloat("_CutoutPositionLookupSize", 1);
+            tilemap.gameObject.GetComponent<TilemapRenderer>().material.SetFloat("_CutoutPositionLookupSize", texture.width);
         }
     }
 
@@ -249,7 +268,7 @@ public class MapController : MonoBehaviour
         Vector3Int targetPosition = WorldToCell(target.transform.position);
 
         float distance = Mathf.Sqrt(Mathf.Pow(attackerPosition.x - targetPosition.x, 2) + Mathf.Pow(attackerPosition.y - targetPosition.y, 2));
-        return distance < attacker.AttackRange;
+        return distance < attacker.AttackRange && HasLineOfSight(attackerPosition, targetPosition);
     }
 
     public void InitializeUnit(Unit unit)
@@ -267,5 +286,97 @@ public class MapController : MonoBehaviour
         MapTile newTile = map[newPosition];
         newTile.CurrentUnit = unit;
         unit.CurrentTile = newTile;
+    }
+
+    public void OnUnitDeath(Unit unit)
+    {
+        MapTile currentTile = unit.CurrentTile;
+        currentTile.CurrentUnit = null;
+        unit.CurrentTile = null;
+    }
+
+    public Bounds GetWorldBounds()
+    {
+        float minX = Single.MaxValue;
+        float minY = Single.MaxValue;
+        float maxX = Single.MinValue;
+        float maxY = Single.MinValue;
+        
+        foreach (var tilemap in tilemaps)
+        {
+            Vector3 min = tilemap.transform.TransformPoint(tilemap.localBounds.min);
+            Vector3 max = tilemap.transform.TransformPoint(tilemap.localBounds.max);
+            if (min.x < minX)
+            {
+                minX = min.x;
+            }
+            if (min.y < minY)
+            {
+                minY = min.y;
+            }
+            if (max.x > maxX)
+            {
+                maxX = max.x;
+            }
+            if (max.y > maxY)
+            {
+                maxY = max.y;
+            }
+        }
+
+        Bounds bounds = new Bounds();
+        bounds.SetMinMax(new Vector3(minX, minY, 0), new Vector3(maxX, maxY, 0));
+        return bounds;
+    }
+    
+    public bool HasLineOfSight(Vector3Int origin, Vector3Int target)
+    {
+        List<Vector3Int> testPositions = new List<Vector3Int>();
+        testPositions.Add(origin);
+        testPositions.Add(origin + Vector3Int.left);
+        testPositions.Add(origin + Vector3Int.right);
+        testPositions.Add(origin + Vector3Int.up);
+        testPositions.Add(origin + Vector3Int.down);
+
+        List<Vector3> targetWorldPositions = new List<Vector3>();
+        Vector3 centerPosition = CellToWorld(target);
+        targetWorldPositions.Add(centerPosition + new Vector3(-0.5f, 0f, 0f));
+        targetWorldPositions.Add(centerPosition + new Vector3(0.5f, 0f, 0f));
+        targetWorldPositions.Add(centerPosition + new Vector3(0f, -0.25f, 0f));
+        targetWorldPositions.Add(centerPosition + new Vector3(0f, 0.25f, 0f));
+
+        // Iterate through adjacent tiles, and try to get 2 clear lines to the corners of the target tile.
+        foreach (var position in testPositions)
+        {
+            MapTile tile = GetTileAtGridCellPosition(position);
+            if (tile != null && !tile.Walkable)
+            {
+                continue;
+            }
+
+            Vector3 originWorldPosition = CellToWorld(position);
+
+            int successCount = 0;
+            foreach (var targetWorldPosition in targetWorldPositions)
+            {
+                float distance = Mathf.Sqrt(Mathf.Pow(originWorldPosition.x - targetWorldPosition.x, 2) +
+                                            Mathf.Pow(originWorldPosition.y - targetWorldPosition.y, 2));
+
+
+                // subtract .01 from distance to let us consider a corner shared with an obstructed cell. Without this, raycast would encounter a collision
+                RaycastHit2D hit = Physics2D.Raycast(originWorldPosition, (targetWorldPosition - originWorldPosition).normalized, distance - 0.01f, LayerMask.GetMask("Terrain"));
+                if (hit.collider == null)
+                {
+                    successCount++;
+                }
+
+                if (successCount >= 2)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

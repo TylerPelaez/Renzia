@@ -13,6 +13,7 @@ public class PlayerTurnState : TurnState
         actionPointLabel = gameController.actionPointLabel;
         turnStateMachine.Add(new PlayerUnitSelectedState(this, mapController));
         ActionPoints = maxActionPoints;
+        gameController.endTurnButton.onClick.AddListener(OnUnitTurnFinished);
         SetActionPointLabel();
     }
 
