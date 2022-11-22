@@ -262,13 +262,13 @@ public class MapController : MonoBehaviour
         return null;
     }
 
-    public bool CanUnitAttack(Unit attacker, Unit target)
+    public bool CanUnitAttack(Unit attacker, Unit target, Weapon weaponUsed)
     {
         Vector3Int attackerPosition = WorldToCell(attacker.transform.position);
         Vector3Int targetPosition = WorldToCell(target.transform.position);
 
         float distance = Mathf.Sqrt(Mathf.Pow(attackerPosition.x - targetPosition.x, 2) + Mathf.Pow(attackerPosition.y - targetPosition.y, 2));
-        return distance < attacker.AttackRange && HasLineOfSight(attackerPosition, targetPosition);
+        return distance < weaponUsed.Range && HasLineOfSight(attackerPosition, targetPosition) && attacker.CanUseWeapon(weaponUsed, gameController.RoundCount);
     }
 
     public void InitializeUnit(Unit unit)

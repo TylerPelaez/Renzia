@@ -328,8 +328,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 16, y: 0}
-  m_SizeDelta: {x: 128, y: 128}
+  m_AnchoredPosition: {x: 18, y: 0}
+  m_SizeDelta: {x: 144, y: 144}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &226531404
 MonoBehaviour:
@@ -395,7 +395,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: ba6bbc614b9cffc45a0d08b875e063c6, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e9c5232bff2bcd4479f4da7c1517887e, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -445,8 +445,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <TotalMovement>k__BackingField: 3
-  <AttackRange>k__BackingField: 10
-  <AttackDamage>k__BackingField: 1
+  <Weapons>k__BackingField:
+  - {fileID: 11400000, guid: 725c8ba75529f5645ac603a4cf1ffdc1, type: 2}
   <MaxHealth>k__BackingField: 5
   <Health>k__BackingField: 0
   <Initiative>k__BackingField: 1
@@ -2256,7 +2256,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 0, y: 14.18}
-  m_SizeDelta: {x: 400, y: 200}
+  m_SizeDelta: {x: 400, y: 180}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &726011123
 MonoBehaviour:
@@ -2354,6 +2354,7 @@ GameObject:
   - component: {fileID: 1077183717}
   - component: {fileID: 1077183716}
   - component: {fileID: 1077183715}
+  - component: {fileID: 1077183719}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -2391,7 +2392,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_UiScaleMode: 0
-  m_ReferencePixelsPerUnit: 100
+  m_ReferencePixelsPerUnit: 256
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 800, y: 600}
   m_ScreenMatchMode: 0
@@ -2445,6 +2446,21 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1077183719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1077183714}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d1bfeb82b52d934bbd11a04e42cf05c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  actionPointLabel: {fileID: 424005739}
+  endTurnButton: {fileID: 326227165}
+  attackButton: {fileID: 226531404}
 --- !u!1 &1093698171
 GameObject:
   m_ObjectHideFlags: 0
@@ -2475,8 +2491,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mapController: {fileID: 521341897}
-  actionPointLabel: {fileID: 424005739}
-  endTurnButton: {fileID: 326227165}
+  uiController: {fileID: 1077183719}
 --- !u!4 &1093698173
 Transform:
   m_ObjectHideFlags: 0
@@ -3014,18 +3029,6 @@ PrefabInstance:
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 272555611}
-    - target: {fileID: 380470954382144298, guid: 144d19bd410ca6c4eab875ebef3b6ed7, type: 3}
-      propertyPath: m_AdditionalShaderChannelsFlag
-      value: 25
-      objectReference: {fileID: 0}
-    - target: {fileID: 846023645993748272, guid: 144d19bd410ca6c4eab875ebef3b6ed7, type: 3}
-      propertyPath: <AttackDamage>k__BackingField
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 846023645993748272, guid: 144d19bd410ca6c4eab875ebef3b6ed7, type: 3}
-      propertyPath: <TotalMovement>k__BackingField
-      value: 3
-      objectReference: {fileID: 0}
     - target: {fileID: 846023645993748274, guid: 144d19bd410ca6c4eab875ebef3b6ed7, type: 3}
       propertyPath: m_RootOrder
       value: 2

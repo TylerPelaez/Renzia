@@ -1,21 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using Util;
 using Object = System.Object;
 
 public class GameController : MonoBehaviour
 {
 	public MapController mapController;
-	public TextMeshProUGUI actionPointLabel;
-	public Button endTurnButton;
+	public UIController uiController;
 	private FiniteStateMachine<GameState> stateMachine = new FiniteStateMachine<GameState>();
 
 	private LinkedList<Unit> initiativeOrder;
-	
-    void Start()
+	private Unit roundStartPreviousUnit;
+	private Unit roundStartNextUnit;
+	public int RoundCount { get; private set; }
+
+	void Start()
     {
 		AddressablesManager manager = AddressablesManager.Instance;
 		manager.OnLoadComplete += OnAddressablesLoadComplete;
@@ -24,8 +24,13 @@ public class GameController : MonoBehaviour
 		stateMachine.Add(new EnemyTurnState(mapController, this));
 		stateMachine.Add(new State<GameState>(GameState.TRANSITION));
 
-		
-		Unit[] allUnits = GameObject.FindObjectsOfType<Unit>();
+		SetupInitiativeOrder();
+		RoundCount = 1;
+    }
+
+	private void SetupInitiativeOrder()
+	{
+		Unit[] allUnits = FindObjectsOfType<Unit>();
 		List<Unit> orderedUnits = new List<Unit>(allUnits);
 		orderedUnits.Sort((firstUnit, secondUnit) => secondUnit.Initiative.CompareTo(firstUnit.Initiative));
 		initiativeOrder = new LinkedList<Unit>();
@@ -35,7 +40,10 @@ public class GameController : MonoBehaviour
 			initiativeOrder.AddLast(unit);
 			unit.OnDeath += OnUnitDeath;
 		}
-    }
+
+		roundStartNextUnit = initiativeOrder.First.Value;
+		roundStartPreviousUnit = initiativeOrder.Last.Value;
+	}
 
     void FixedUpdate()
 	{
@@ -57,6 +65,11 @@ public class GameController : MonoBehaviour
 		Unit finishedUnit = GetCurrentTurnUnit();
 		initiativeOrder.RemoveFirst();
 		initiativeOrder.AddLast(finishedUnit);
+
+		if (finishedUnit == roundStartPreviousUnit && GetCurrentTurnUnit() == roundStartNextUnit)
+		{
+			RoundCount++;
+		}
 
 		stateMachine.SetCurrentState(GameState.TRANSITION);
 

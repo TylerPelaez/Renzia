@@ -131,9 +131,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d38480b22c2e99e46baf4137985d4b43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <TotalMovement>k__BackingField: 5
-  <AttackRange>k__BackingField: 10
-  <AttackDamage>k__BackingField: 5
+  <TotalMovement>k__BackingField: 3
+  <Weapons>k__BackingField:
+  - {fileID: 11400000, guid: 725c8ba75529f5645ac603a4cf1ffdc1, type: 2}
   <MaxHealth>k__BackingField: 5
   <Health>k__BackingField: 0
   <Initiative>k__BackingField: 10
@@ -196,7 +196,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0

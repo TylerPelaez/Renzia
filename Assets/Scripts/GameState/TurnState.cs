@@ -1,61 +1,30 @@
 ﻿public class TurnState : State<GameState>
 {
-    protected FiniteStateMachine<TurnStates> turnStateMachine = new FiniteStateMachine<TurnStates>();
     protected MapController mapController;
-    private GameController gameController;
+    protected GameController gameController;
     
-    public Unit SelectedUnit { get; private set; }
+    public Unit CurrentUnit { get; private set; }
 
     public TurnState(MapController mapController, GameController gameController, GameState gameState) : base(gameState) 
     {
         this.mapController = mapController;
         this.gameController = gameController;
-        turnStateMachine.Add(new State<TurnStates>(TurnStates.TRANSITION));
     }
 
     public override void Enter()
     {
         base.Enter();
-        OnUnitSelected(gameController.GetCurrentTurnUnit());
+        OnUnitTurnStarted(gameController.GetCurrentTurnUnit());
     }
 
-    public override void Exit()
+    protected void OnUnitTurnStarted(Unit unit)
     {
-        base.Exit();
-        turnStateMachine.SetCurrentState(TurnStates.TRANSITION);
-    }
-    
-    public override void FixedUpdate()
-    {
-        base.FixedUpdate();
-        turnStateMachine.FixedUpdate();
+        CurrentUnit = unit;
     }
 
-    public override void Update()
+    protected void OnUnitTurnFinished()
     {
-        base.Update();
-        turnStateMachine.Update();
-    }
-
-    public void OnUnitSelected(Unit selected)
-    {
-        SelectedUnit = selected;
-        turnStateMachine.SetCurrentState(TurnStates.UNIT_SELECTED);
-    }
-
-    public void OnUnitTurnFinished()
-    {
-        SelectedUnit = null;
+        CurrentUnit = null;
         gameController.OnUnitTurnFinished();
-    }
-
-    
-    public virtual bool CanSpendActionPoints(int amount)
-    {
-        return false;
-    }
-    public virtual void SpendActionPoints(int amount)
-    {
-        return;
     }
 }

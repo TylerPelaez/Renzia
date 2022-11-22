@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Unit : MonoBehaviour
@@ -6,9 +7,9 @@ public class Unit : MonoBehaviour
     [field: SerializeField]
     public int TotalMovement { get; private set; } = 5;
     [field: SerializeField]
-    public int AttackRange { get; private set; } = 10;
-    [field: SerializeField]
-    public int AttackDamage { get; private set; } = 5;
+    public Weapon[] Weapons { get; private set; }
+
+    private Dictionary<string, int> WeaponLastFiredRoundCount;
 
     [field: SerializeField]
     public int MaxHealth { get; private set; } = 5;
@@ -31,6 +32,7 @@ public class Unit : MonoBehaviour
     {
         Health = MaxHealth;
         healthBarUI.SetHealth(Health, MaxHealth);
+        WeaponLastFiredRoundCount = new Dictionary<string, int>();
     }
 
     public void TakeDamage(int amount)
@@ -43,5 +45,16 @@ public class Unit : MonoBehaviour
             // TODO: stuff on death
             Destroy(gameObject);
         }
+    }
+
+    public void Attack(Weapon weapon, Unit target, int currentRoundCount)
+    {
+        target.TakeDamage(weapon.RollDamage());
+        WeaponLastFiredRoundCount[weapon.Name] = currentRoundCount;
+    }
+
+    public bool CanUseWeapon(Weapon weapon, int currentRoundCount)
+    {
+        return !WeaponLastFiredRoundCount.ContainsKey(weapon.Name) || currentRoundCount - WeaponLastFiredRoundCount[weapon.Name] >= weapon.TurnCooldown;
     }
 }
