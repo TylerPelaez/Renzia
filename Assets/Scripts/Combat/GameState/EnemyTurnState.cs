@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class EnemyTurnState : TurnState
 {
-    private float waitTimer = 1.0f;
+    private float waitTimer = 0.5f;
     private float waitTimeStarted;
     
     public EnemyTurnState(MapController mapController, GameController gameController) : base(mapController, gameController, GameState.ENEMY_TURN) {}
@@ -23,6 +23,7 @@ public class EnemyTurnState : TurnState
             return;
         }
         
+        // TODO: Wait on completion of animations before going to next step
         Unit target = Move();
         if (target != null)
         {
@@ -37,7 +38,7 @@ public class EnemyTurnState : TurnState
     private Unit Move()
     {
         
-        Vector3Int unitPosition = mapController.WorldToCell(CurrentUnit.transform.position);
+        Vector3Int unitPosition = CurrentUnit.CurrentTile.GridPos;
         GameObject[] playerUnits = GameObject.FindGameObjectsWithTag("PlayerUnit");
 
 
@@ -47,7 +48,7 @@ public class EnemyTurnState : TurnState
         // Find closest player unit to attack
         foreach (var playerUnit in playerUnits)
         {
-            Vector3Int playerUnitPosition = mapController.WorldToCell(playerUnit.transform.position);
+            Vector3Int playerUnitPosition = playerUnit.GetComponent<Unit>().CurrentTile.GridPos;
             List<Vector3Int> path = mapController.GetShortestPath(unitPosition, playerUnitPosition);
             
             // TODO: Better logic for determining which player unit to target... I.e importance, distance, whether other enemies are handling it, etc.
@@ -77,8 +78,7 @@ public class EnemyTurnState : TurnState
             }
         }
 
-        CurrentUnit.transform.position = mapController.CellToWorld(targetPosition) + new Vector3(0, 0, 2);
-        mapController.MoveUnit(CurrentUnit, targetPosition);
+        gameController.MoveUnit(CurrentUnit, targetPosition);
         
         return target;
     }

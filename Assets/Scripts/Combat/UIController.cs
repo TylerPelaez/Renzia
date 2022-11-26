@@ -18,6 +18,8 @@ public class UIController : MonoBehaviour
 
     [SerializeField] 
     private InitiativeOrderUIController initiativeOrderUIController;
+
+    private bool uiEnabled = true;
     
     public event EventHandler OnEndTurnButtonClicked;
     public event EventHandler OnAttackButtonClicked;
@@ -51,5 +53,12 @@ public class UIController : MonoBehaviour
                 missionObjectiveLabel.text = "Kill All Enemies";
                 break;
         }
+    }
+
+    public void SetEnabled(bool isEnabled)
+    {
+        uiEnabled = isEnabled;
+        attackButton.enabled = isEnabled;
+        endTurnButton.enabled = isEnabled;
     }
 }

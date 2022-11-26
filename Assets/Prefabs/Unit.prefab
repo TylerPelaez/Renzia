@@ -12,8 +12,9 @@ GameObject:
   - component: {fileID: 846023645993748277}
   - component: {fileID: 846023645993748273}
   - component: {fileID: 846023645993748272}
+  - component: {fileID: 4758247428370127378}
   m_Layer: 6
-  m_Name: PlayerUnit
+  m_Name: Unit
   m_TagString: PlayerUnit
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -131,6 +132,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d38480b22c2e99e46baf4137985d4b43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Name>k__BackingField: 
   <TotalMovement>k__BackingField: 3
   <Weapons>k__BackingField:
   - {fileID: 11400000, guid: 725c8ba75529f5645ac603a4cf1ffdc1, type: 2}
@@ -140,6 +142,26 @@ MonoBehaviour:
   <Team>k__BackingField: 0
   healthBarUI: {fileID: 5681152040917701054}
   initiativeOrderPortrait: {fileID: 2800000, guid: ee9fa9646713d924f995edbd26b57a91, type: 3}
+--- !u!95 &4758247428370127378
+Animator:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 846023645993748276}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 1c193ff344955f54a82065d61e021101, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
 --- !u!1 &2102126047425457144
 GameObject:
   m_ObjectHideFlags: 0

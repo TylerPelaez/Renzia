@@ -48,6 +48,7 @@ public class GameController : MonoBehaviour
 		{
 			initiativeOrder.AddLast(unit);
 			unit.OnDeath += OnUnitDeath;
+			unit.OnMovementComplete += OnUnitMovementComplete;
 		}
 
 		roundStartNextUnit = initiativeOrder.First.Value;
@@ -211,5 +212,33 @@ public class GameController : MonoBehaviour
 		}
 
 		return objectiveComplete;
+	}
+
+	public void MoveUnit(Unit unit, Vector3Int newPosition)
+	{
+		List<Vector3Int> shortestPath = mapController.GetShortestPath(unit.CurrentTile.GridPos, newPosition);
+		mapController.MoveUnit(unit, newPosition);
+		List<Vector3> shortestPathWorldPositions = new List<Vector3>();
+		foreach (var gridPos in shortestPath)
+		{
+			Vector3 position = mapController.CellToWorld(gridPos);
+			// TODO: FIX THIS if you want animations to work with higher z-value tiles
+			position.z = 2;
+			shortestPathWorldPositions.Add(position);
+		}
+
+		unit.StartMove(shortestPathWorldPositions);
+		
+		uiController.SetEnabled(false);
+	}
+
+	private void OnUnitMovementComplete(Object caller, EventArgs args)
+	{
+		if (caller is not Unit unit)
+		{
+			return;
+		}
+		
+		uiController.SetEnabled(true);
 	}
 }

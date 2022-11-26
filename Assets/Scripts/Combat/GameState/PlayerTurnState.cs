@@ -89,11 +89,11 @@ public class PlayerTurnState : TurnState
             }
         }
 
-        Vector3 unitPos = CurrentUnit.gameObject.transform.position;
+        Vector3 unitPos = mapController.CellToWorld(CurrentUnit.CurrentTile.GridPos);
         
         tilesInMovementRange = mapController.GetAllTilesInRange(unitPos, CurrentUnit.TotalMovement);
 
-        Vector3 offset = 2 * Vector3.forward;
+        Vector3 offset = 1.9f * Vector3.forward;
         movementIndicators = new List<GameObject>(tilesInMovementRange.Count);
         foreach (MapTile tile in tilesInMovementRange)
         {
@@ -185,8 +185,7 @@ public class PlayerTurnState : TurnState
             {
                 if (tile.GridPos == cellPosition)
                 {
-                    CurrentUnit.gameObject.transform.position = mapController.CellToWorld(tile.GridPos) + new Vector3(0, 0, 2);
-                    mapController.MoveUnit(CurrentUnit, tile.GridPos);
+                    gameController.MoveUnit(CurrentUnit, tile.GridPos);
                     if (hasMoved)
                     {
                         SpendActionPoints(MOVEMENT_ACTION_POINT_COST);
