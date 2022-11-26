@@ -4,11 +4,25 @@ using UnityEngine;
 
 public class EnemyTurnState : TurnState
 {
-    public EnemyTurnState(MapController mapController, GameController gameController) : base(mapController, gameController, GameState.ENEMY_TURN) {}
+    private float waitTimer = 1.0f;
+    private float waitTimeStarted;
     
+    public EnemyTurnState(MapController mapController, GameController gameController) : base(mapController, gameController, GameState.ENEMY_TURN) {}
+
+    public override void Enter()
+    {
+        base.Enter();
+        waitTimeStarted = Time.time;
+    }
+
     public override void Update()
     {
         base.Update();
+        if (Time.time - waitTimer < waitTimeStarted)
+        {
+            return;
+        }
+        
         Unit target = Move();
         if (target != null)
         {

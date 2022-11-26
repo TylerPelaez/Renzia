@@ -5,6 +5,9 @@ using UnityEngine;
 public class Unit : MonoBehaviour
 {
     [field: SerializeField]
+    public string Name { get; private set; }
+    
+    [field: SerializeField]
     public int TotalMovement { get; private set; } = 5;
     [field: SerializeField]
     public Weapon[] Weapons { get; private set; }
@@ -25,6 +28,8 @@ public class Unit : MonoBehaviour
     public MapTile CurrentTile { get; set; }
 
     public HealthBarUI healthBarUI;
+
+    public Texture2D initiativeOrderPortrait;
     
     public event EventHandler OnDeath;
     

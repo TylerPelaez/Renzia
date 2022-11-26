@@ -4,10 +4,13 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
+	private const float CAMERA_Z = -0.5f;
 	public float speed = .01f;
 	public float cameraMovementScreenSpacePct = 0.05f;
 	
 	private State state = State.Unlocked;
+	private Unit following;
+	
 	public Bounds Bounds { get; set; }
 	
 	
@@ -21,7 +24,8 @@ public class CameraController : MonoBehaviour
 	void Update()
 	{
 		switch (state) {
-		case State.Locked:
+		case State.Following:
+			MoveTo(following.transform.position);
 			break;
 		case State.Unlocked:
 			Vector3 mousePos = Input.mousePosition;
@@ -40,17 +44,34 @@ public class CameraController : MonoBehaviour
 				newPosition = Bounds.ClosestPoint(newPosition);
 			}
 
-			newPosition.z = -0.5f;
-			transform.position = newPosition;
-			
+			MoveTo(newPosition);
 			break;
 		default:
 			break;
 		}
 	}
+
+	public void MoveTo(Vector3 position)
+	{
+		transform.position = new Vector3(position.x, position.y, CAMERA_Z);
+	}
+
+	public void FollowUnit(Unit unit)
+	{
+		state = State.Following;
+		following = unit;
+		MoveTo(unit.transform.position);
+	}
+
+	public void Unlock()
+	{
+		state = State.Unlocked;
+		following = null;
+	}
+	
 	
 	private enum State {
-		Locked,
-		Unlocked
+		Unlocked,
+		Following,
 	}
 }

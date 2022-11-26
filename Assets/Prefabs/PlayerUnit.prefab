@@ -139,6 +139,7 @@ MonoBehaviour:
   <Initiative>k__BackingField: 10
   <Team>k__BackingField: 0
   healthBarUI: {fileID: 5681152040917701054}
+  initiativeOrderPortrait: {fileID: 2800000, guid: ee9fa9646713d924f995edbd26b57a91, type: 3}
 --- !u!1 &2102126047425457144
 GameObject:
   m_ObjectHideFlags: 0
