@@ -6,12 +6,16 @@ using UnityEngine.UI;
 
 public class UIController : MonoBehaviour
 {
+    private const int ACTION_BUTTON_PIXELS_PER_UNIT = 36;
+    
     [SerializeField]
     private TextMeshProUGUI actionPointLabel;
     [SerializeField]
     private Button endTurnButton;
     [SerializeField]
-    private Button attackButton;
+    private GameObject actionPanel;
+    [SerializeField]
+    private GameObject actionButtonPrefab;
 
     [SerializeField]
     private TextMeshProUGUI missionObjectiveLabel;
@@ -19,15 +23,12 @@ public class UIController : MonoBehaviour
     [SerializeField] 
     private InitiativeOrderUIController initiativeOrderUIController;
 
-    private bool uiEnabled = true;
-    
     public event EventHandler OnEndTurnButtonClicked;
     public event EventHandler OnAttackButtonClicked;
     
     private void Start()
     {
         endTurnButton.onClick.AddListener(() => OnEndTurnButtonClicked?.Invoke(this, EventArgs.Empty));
-        attackButton.onClick.AddListener(() => OnAttackButtonClicked?.Invoke(this, EventArgs.Empty));
     }
 
     public void SetActionPointLabel(int actionPoints)
@@ -45,6 +46,29 @@ public class UIController : MonoBehaviour
         initiativeOrderUIController.OnTurnEnded();
     }
 
+    public void OnTurnStarted(Unit startingUnit)
+    {
+        actionPanel.SetActive(startingUnit.Team == Team.PLAYER);
+        endTurnButton.gameObject.SetActive(startingUnit.Team == Team.PLAYER);
+        
+        if (startingUnit.Team == Team.PLAYER)
+        {
+            foreach (Transform child in actionPanel.transform)
+            {
+                Destroy(child.gameObject);
+            }
+
+            foreach (var weapon in startingUnit.Weapons)
+            {
+                GameObject weaponButton = Instantiate(actionButtonPrefab, actionPanel.transform);
+                Texture2D texture = weapon.ActionPanelButtonTexture;
+                weaponButton.GetComponent<Image>().sprite = Sprite.Create(texture, new Rect(0.0f, 0.0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), ACTION_BUTTON_PIXELS_PER_UNIT);
+                
+                weaponButton.GetComponent<Button>()?.onClick.AddListener(() => OnAttackButtonClicked?.Invoke(this, EventArgs.Empty));
+            }
+        }
+    }
+
     public void SetMissionObjectiveText(MissionObjective objective)
     {
         switch (objective)
@@ -57,8 +81,11 @@ public class UIController : MonoBehaviour
 
     public void SetEnabled(bool isEnabled)
     {
-        uiEnabled = isEnabled;
-        attackButton.enabled = isEnabled;
-        endTurnButton.enabled = isEnabled;
+        foreach (Transform child in actionPanel.transform)
+        {
+            child.gameObject.GetComponent<Button>().interactable = isEnabled;
+        }
+        
+        endTurnButton.interactable = isEnabled;
     }
 }

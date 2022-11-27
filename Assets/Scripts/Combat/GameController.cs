@@ -114,6 +114,8 @@ public class GameController : MonoBehaviour
 				cameraController.FollowUnit(currentUnit);
 				break;
 		}
+
+		uiController.OnTurnStarted(currentUnit);
 	}
 
 	public void OnUnitDeath(Object deadUnit, EventArgs args)

@@ -21,6 +21,8 @@ public class Weapon : ScriptableObject
     [field: SerializeField] public int ActionPointCost { get; private set; } = 1;
 
     [field: SerializeField] public int TurnCooldown { get; private set; } = 1;
+    
+    [field: SerializeField] public Texture2D ActionPanelButtonTexture { get; private set; }
 
     public int RollDamage()
     {
