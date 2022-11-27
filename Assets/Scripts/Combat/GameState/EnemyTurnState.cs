@@ -1,11 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Object = System.Object;
 
 public class EnemyTurnState : TurnState
 {
     private float waitTimer = 0.5f;
     private float waitTimeStarted;
+
+    private bool isMoving;
+    private bool hasMoved;
+    private bool hasAttacked;
+    private Unit currentTarget;
+    
     
     public EnemyTurnState(MapController mapController, GameController gameController) : base(mapController, gameController, GameState.ENEMY_TURN) {}
 
@@ -13,6 +20,11 @@ public class EnemyTurnState : TurnState
     {
         base.Enter();
         waitTimeStarted = Time.time;
+        isMoving = false;
+        hasMoved = false;
+        hasAttacked = false;
+        CurrentUnit.OnMovementComplete += OnUnitMovementComplete;
+        currentTarget = null;
     }
 
     public override void Update()
@@ -22,29 +34,38 @@ public class EnemyTurnState : TurnState
         {
             return;
         }
-        
-        // TODO: Wait on completion of animations before going to next step
-        Unit target = Move();
-        if (target != null)
+
+        if (isMoving)
         {
-            // TODO: weapon selection for enemies
-            Attack(target, CurrentUnit.Weapons[0]);
+            return;
         }
-        
-        // TODO: Animate stuff so enemy turn doesn't finish immediately.
+
+            // TODO: Allow this to happen in a different order
+        if (!hasMoved)
+        {
+            Move();
+            return;
+        }
+
+        // TODO: Select Weapon for enemy attack?
+        // TODO: Animate Attack
+        if (!hasAttacked && currentTarget != null)
+        {
+            Attack(currentTarget, CurrentUnit.Weapons[0]);
+            return;
+        }
+
         OnUnitTurnFinished();
     }
 
-    private Unit Move()
+    private void Move()
     {
-        
         Vector3Int unitPosition = CurrentUnit.CurrentTile.GridPos;
         GameObject[] playerUnits = GameObject.FindGameObjectsWithTag("PlayerUnit");
 
 
         List<Vector3Int> shortestPath = null;
         int shortestPathLength = Int32.MaxValue;
-        Unit target = null;
         // Find closest player unit to attack
         foreach (var playerUnit in playerUnits)
         {
@@ -56,7 +77,7 @@ public class EnemyTurnState : TurnState
             {
                 shortestPath = path;
                 shortestPathLength = path.Count;
-                target = playerUnit.GetComponent<Unit>();
+                currentTarget = playerUnit.GetComponent<Unit>();
             }
         }
 
@@ -64,7 +85,7 @@ public class EnemyTurnState : TurnState
         if (shortestPath == null || shortestPathLength == 2)
         {
             Debug.Log("Could not find path to unit!");
-            return target;
+            return;
         }
         
         Vector3Int targetPosition = shortestPath[0];
@@ -79,8 +100,7 @@ public class EnemyTurnState : TurnState
         }
 
         gameController.MoveUnit(CurrentUnit, targetPosition);
-        
-        return target;
+        isMoving = true;
     }
 
     private void Attack(Unit target, Weapon weaponUsed)
@@ -91,5 +111,14 @@ public class EnemyTurnState : TurnState
         }
         
         CurrentUnit.Attack(weaponUsed, target, gameController.RoundCount);
+        // TODO: Animate attack and set this when animation is complete
+        hasAttacked = true;
+    }
+
+    private void OnUnitMovementComplete(Object caller, EventArgs args)
+    {
+        CurrentUnit.OnMovementComplete -= OnUnitMovementComplete;
+        hasMoved = true;
+        isMoving = false;
     }
 }

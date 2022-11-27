@@ -93,7 +93,7 @@ public class PlayerTurnState : TurnState
         
         tilesInMovementRange = mapController.GetAllTilesInRange(unitPos, CurrentUnit.TotalMovement);
 
-        Vector3 offset = 1.9f * Vector3.forward;
+        Vector3 offset = 1.5f * Vector3.forward;
         movementIndicators = new List<GameObject>(tilesInMovementRange.Count);
         foreach (MapTile tile in tilesInMovementRange)
         {

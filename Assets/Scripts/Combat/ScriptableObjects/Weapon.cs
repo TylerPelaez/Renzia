@@ -27,6 +27,6 @@ public class Weapon : ScriptableObject
         var random = new System.Random();
         int damage = random.Next(MinDamage, MaxDamage);
         bool crit = random.NextDouble() <= CritChance;
-        return crit ? damage * 2 : damage;
+        return crit ? (int) (damage * 1.5f) : damage;
     }
 }
