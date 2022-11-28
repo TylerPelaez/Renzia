@@ -148,7 +148,7 @@ public class MapController : MonoBehaviour
         return GetAllTilesInRange(cellPosition, maxDistance, includeStart, includeOccupiedTiles);
     }
 
-    private MapTile[] GetAdjacentTilesToPosition(Vector3Int cellPosition)
+    public MapTile[] GetAdjacentTilesToPosition(Vector3Int cellPosition)
     {
         MapTile[] tiles = new MapTile[8];
         tiles[0] = GetTileAtGridCellPosition(cellPosition + Vector3Int.left);
@@ -178,7 +178,7 @@ public class MapController : MonoBehaviour
 
         foreach (MapTile test in testTiles)
         {
-            if (test != null && test.Walkable && (occupiedTilesAreWalkable || test.CurrentUnit == null))
+            if (test != null && test.Walkable && !visited.ContainsKey(test.GridPos) && (occupiedTilesAreWalkable || test.CurrentUnit == null))
             {
                 DFS(visited, test.GridPos, range - 1, occupiedTilesAreWalkable);
             }
@@ -235,7 +235,7 @@ public class MapController : MonoBehaviour
             var adjacentTiles = GetAdjacentTilesToPosition(current);
             foreach (var tile in adjacentTiles)
             {
-                if (tile == null || !tile.Walkable)
+                if (tile == null || !tile.Walkable || tile.CurrentUnit != null)
                 {
                     continue;
                 }

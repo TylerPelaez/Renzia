@@ -70,7 +70,37 @@ public class EnemyTurnState : TurnState
         foreach (var playerUnit in playerUnits)
         {
             Vector3Int playerUnitPosition = playerUnit.GetComponent<Unit>().CurrentTile.GridPos;
-            List<Vector3Int> path = mapController.GetShortestPath(unitPosition, playerUnitPosition);
+            List<MapTile> candidateTiles = mapController.GetAllTilesInRange(playerUnit.transform.position, CurrentUnit.Weapons[0].Range);
+            MapTile bestTile = null;
+            float lowestTravelDistance = Single.MaxValue;
+            float lowestPlayerDistance = Single.MaxValue;
+            foreach (var tile in candidateTiles)
+            {
+                if (tile == null || !tile.Walkable || tile.CurrentUnit != null || !mapController.HasLineOfSight(tile.GridPos, playerUnitPosition))
+                {
+                    continue;
+                }
+
+                float distanceToPlayer = Vector3.Distance(tile.GridPos, playerUnitPosition);
+                float travelDistance = Vector3.Distance(tile.GridPos, unitPosition);
+                
+                
+                if (bestTile == null || distanceToPlayer < lowestPlayerDistance || (distanceToPlayer == lowestPlayerDistance && travelDistance < lowestTravelDistance))
+                {
+                    bestTile = tile;
+                    lowestPlayerDistance = distanceToPlayer;
+                    lowestTravelDistance = travelDistance;
+                }
+            }
+
+            // Trying to attack this unit is fucked, try something else....
+            if (bestTile == null)
+            {
+                continue;
+            }
+            
+            
+            List<Vector3Int> path = mapController.GetShortestPath(unitPosition, bestTile.GridPos);
             
             // TODO: Better logic for determining which player unit to target... I.e importance, distance, whether other enemies are handling it, etc.
             if (path != null && path.Count < shortestPathLength)
@@ -101,7 +131,7 @@ public class EnemyTurnState : TurnState
         {
             targetPosition = shortestPath[i];
             // the last value in shortest path is the tile the player is standing on, second to last is where this unit should go
-            if (i == shortestPathLength - 2)
+            if (i == shortestPathLength - 1)
             {
                 break;
             }
