@@ -25,16 +25,24 @@ public class GameController : MonoBehaviour
 
 	void Start()
     {
-		AddressablesManager manager = AddressablesManager.Instance;
-		manager.OnLoadComplete += OnAddressablesLoadComplete;
-	    
-		stateMachine.Add(new PlayerTurnState(mapController, this));
+	    stateMachine.Add(new PlayerTurnState(mapController, this));
 		stateMachine.Add(new EnemyTurnState(mapController, this));
 		stateMachine.Add(new State<GameState>(GameState.TRANSITION));
+		stateMachine.Add(new State<GameState>(GameState.PAUSED));
 
 		SetupInitiativeOrder();
 		RoundCount = 1;
 		uiController.SetMissionObjectiveText(Objective);
+		
+		AddressablesManager manager = AddressablesManager.Instance;
+		if (manager.Loaded)
+		{
+			OnAddressablesLoadComplete(null, EventArgs.Empty);
+		}
+		else
+		{
+			manager.OnLoadComplete += OnAddressablesLoadComplete;
+		}
     }
 
 	private void SetupInitiativeOrder()
@@ -180,6 +188,7 @@ public class GameController : MonoBehaviour
 		uiController.ResetInitiativeOrderUI(initiativeOrder);
 
 		EvaluateObjective();
+		EvaluateLoss();
 	}
 
 	public LinkedList<Unit> GetAllUnits()
@@ -209,11 +218,32 @@ public class GameController : MonoBehaviour
 
 		if (objectiveComplete)
 		{
-			// TODO: Mission Win screen
-			Debug.Log("You won!");
+			stateMachine.SetCurrentState(GameState.PAUSED);
+			uiController.ShowOutcome(true);
 		}
 
 		return objectiveComplete;
+	}
+
+	private bool EvaluateLoss()
+	{
+		bool foundPlayer = false;
+		foreach (var unit in initiativeOrder)
+		{
+			if (unit.Team == Team.PLAYER)
+			{
+				foundPlayer = true;
+				break;
+			}
+		}
+
+		if (!foundPlayer)
+		{
+			stateMachine.SetCurrentState(GameState.PAUSED);
+			uiController.ShowOutcome(false);
+		}
+
+		return !foundPlayer;
 	}
 
 	public void MoveUnit(Unit unit, Vector3Int newPosition)

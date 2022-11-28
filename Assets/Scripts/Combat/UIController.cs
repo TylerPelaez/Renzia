@@ -1,7 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class UIController : MonoBehaviour
@@ -23,6 +25,12 @@ public class UIController : MonoBehaviour
     [SerializeField] 
     private InitiativeOrderUIController initiativeOrderUIController;
 
+    [SerializeField]
+    private GameObject missionOutcomePanel;
+    
+    [SerializeField]
+    private TextMeshProUGUI missionOutcomeLabel;
+    
     public event EventHandler OnEndTurnButtonClicked;
     public event EventHandler OnAttackButtonClicked;
     
@@ -87,5 +95,45 @@ public class UIController : MonoBehaviour
         }
         
         endTurnButton.interactable = isEnabled;
+    }
+
+    public void ShowOutcome(bool victory)
+    {
+        foreach (Transform child in gameObject.transform)
+        {
+            child.gameObject.SetActive(false);
+        }
+        
+        missionOutcomePanel.SetActive(true);
+        if (victory)
+        {
+            missionOutcomeLabel.text = "Victory";
+        }
+        else
+        {
+            missionOutcomeLabel.text = "Defeat";
+        }
+    }
+
+    public void OnRestartButtonClicked()
+    {
+        StartCoroutine(LoadSceneAsync());
+    }
+    
+    public void OnQuitButtonClicked()
+    {
+        Application.Quit();
+    }
+    
+    IEnumerator LoadSceneAsync()
+    {
+
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("Playtest");
+
+        // Wait until the asynchronous scene fully loads
+        while (!asyncLoad.isDone)
+        {
+            yield return null;
+        }
     }
 }

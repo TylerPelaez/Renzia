@@ -8,6 +8,8 @@ namespace Util
 {
 public class AddressablesManager
 {
+    public bool Loaded { get; private set; }
+    
     private AddressablesManager()
     {
         Load();
@@ -36,7 +38,11 @@ public class AddressablesManager
         }
 
         loadingOperation = Addressables.ResourceManager.CreateGenericGroupOperation(opList);
-        loadingOperation.Completed += obj => OnLoadComplete?.Invoke(this, EventArgs.Empty);
+        loadingOperation.Completed += obj =>
+        {
+            Loaded = true;
+            OnLoadComplete?.Invoke(this, EventArgs.Empty);
+        };
     }
 
     public bool IsDone()

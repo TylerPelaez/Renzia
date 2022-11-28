@@ -81,12 +81,20 @@ public class EnemyTurnState : TurnState
             }
         }
 
-        // when shortestPath is null, path couldn't be found. When it's 2, the unit is standing next to the player unit anyway
-        if (shortestPath == null || shortestPathLength == 2)
+        // when shortestPath is null, path couldn't be found. 
+        if (shortestPath == null)
         {
             Debug.Log("Could not find path to unit!");
             return;
         }
+
+        // When path length is 2, the unit is standing next to the player unit. Movement is not necessary, so just say we've moved.
+        if (shortestPathLength == 2)
+        {
+            hasMoved = true;
+            return;
+        }
+        
         
         Vector3Int targetPosition = shortestPath[0];
         for (int i = 0; i <= CurrentUnit.TotalMovement; i++)
