@@ -6,9 +6,12 @@ using Object = System.Object;
 
 public class GameController : MonoBehaviour
 {
-	public MapController mapController;
-	public UIController uiController;
-	public CameraController cameraController;
+	[SerializeField]
+	private MapController mapController;
+	[SerializeField]
+	private UIController uiController;
+	[SerializeField]
+	private CameraController cameraController;
 	private FiniteStateMachine<GameState> stateMachine = new FiniteStateMachine<GameState>();
 
 	private LinkedList<Unit> initiativeOrder;
@@ -25,7 +28,7 @@ public class GameController : MonoBehaviour
 
 	void Start()
     {
-	    stateMachine.Add(new PlayerTurnState(mapController, this));
+	    stateMachine.Add(new PlayerTurnState(mapController, uiController, this, cameraController));
 		stateMachine.Add(new EnemyTurnState(mapController, this));
 		stateMachine.Add(new State<GameState>(GameState.TRANSITION));
 		stateMachine.Add(new State<GameState>(GameState.PAUSED));
@@ -123,7 +126,7 @@ public class GameController : MonoBehaviour
 				break;
 		}
 
-		uiController.OnTurnStarted(currentUnit);
+		uiController.OnTurnStarted(currentUnit, RoundCount);
 	}
 
 	public void OnUnitDeath(Object deadUnit, EventArgs args)

@@ -44,7 +44,7 @@ public class Unit : MonoBehaviour
     public event EventHandler OnDeath;
     public event EventHandler OnMovementComplete;
     
-    public void Start()
+    public void Awake()
     {
         Health = MaxHealth;
         healthBarUI.SetHealth(Health, MaxHealth);

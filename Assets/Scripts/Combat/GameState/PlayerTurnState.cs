@@ -10,22 +10,30 @@ public class PlayerTurnState : TurnState
     private List<MapTile> tilesInMovementRange;
     private List<GameObject> movementIndicators;
 
+    // Attack Mode vars
     private List<Unit> targetableUnits;
     private Unit currentlyTargetedUnit;
+    private Weapon currentlyUsingWeapon;
 
     private readonly UIController uiController;
+    private readonly CameraController cameraController;
+    
     private const int MAX_ACTION_POINTS = 4;
     private const int MOVEMENT_ACTION_POINT_COST = 1;
     
     public int ActionPoints { get; private set; }
 
-    public PlayerTurnState(MapController mapController, GameController gameController) : base(mapController, gameController, GameState.PLAYER_TURN)
+    public PlayerTurnState(MapController mapController, UIController uiController, GameController gameController, CameraController cameraController) : base(mapController, gameController, GameState.PLAYER_TURN)
     {
-        uiController = gameController.uiController;
+        this.uiController = uiController;
+        this.cameraController = cameraController;
         ActionPoints = MAX_ACTION_POINTS;
         uiController.SetActionPointLabel(ActionPoints);
         uiController.OnEndTurnButtonClicked += (caller, args) => OnUnitTurnFinished();
         uiController.OnAttackButtonClicked += (caller, args) => EnterAttackMode(0);
+        uiController.OnAttackModeNextButtonClicked += (caller, args) => TargetNextUnit();
+        uiController.OnAttackModePreviousButtonClicked += (caller, args) => TargetPreviousUnit();
+        uiController.OnFireButtonClicked += (caller, args) => AttackModeFire();
     }
 
     public override void Enter()
@@ -76,21 +84,16 @@ public class PlayerTurnState : TurnState
         }
 
         ActionPoints -= points;
-        uiController.SetActionPointLabel(ActionPoints);
+        uiController.OnPlayerActionTaken(ActionPoints, CurrentUnit, gameController.RoundCount);
     }
     private void UpdateMovementIndicators()
     {
         // TODO: Pooling? maybe not needed if this isn't the final method used for movement
-        if (movementIndicators != null)
-        {
-            foreach (var indicator in movementIndicators)
-            {
-                GameObject.Destroy(indicator);
-            }
-        }
+        ClearMovementIndicators();
 
         Vector3 unitPos = mapController.CellToWorld(CurrentUnit.CurrentTile.GridPos);
         
+        // NOTE: THIS IS IMPORTANT FOR MOVEMENT LOGIC IN GENERAL, NOT JUST INDICATORS.
         tilesInMovementRange = mapController.GetAllTilesInRange(unitPos, CurrentUnit.TotalMovement);
 
         Vector3 offset = 1.5f * Vector3.forward;
@@ -101,6 +104,52 @@ public class PlayerTurnState : TurnState
         }
     }
 
+    private void ClearMovementIndicators()
+    {
+        if (movementIndicators != null)
+        {
+            foreach (var indicator in movementIndicators)
+            {
+                GameObject.Destroy(indicator);
+            }
+        }
+    }
+
+    private void DefaultState()
+    {
+          if (Input.GetButtonDown("End Turn"))
+        {
+            OnUnitTurnFinished();
+        }
+        else if (Input.GetButtonDown("Select"))
+        {
+            // First Move per turn is free, next one costs AP
+            if (hasMoved && !CanSpendActionPoints(MOVEMENT_ACTION_POINT_COST))
+            {
+                return;
+            }
+            
+            // otherwise, try moving to the place clicked on
+            Vector3 worldPos = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 1));
+            Vector3Int cellPosition = mapController.WorldToCell(worldPos);
+            foreach (var tile in tilesInMovementRange)
+            {
+                if (tile.GridPos == cellPosition)
+                {
+                    gameController.MoveUnit(CurrentUnit, tile.GridPos);
+                    if (hasMoved)
+                    {
+                        SpendActionPoints(MOVEMENT_ACTION_POINT_COST);
+                    }
+
+                    hasMoved = true;
+                    UpdateMovementIndicators();
+                    return;
+                }
+            }
+        }
+    }
+    
     private void EnterAttackMode(int weaponIndex)
     {
         Weapon weapon = CurrentUnit.Weapons[weaponIndex];
@@ -129,79 +178,97 @@ public class PlayerTurnState : TurnState
         if (targetableUnits.Count > 0)
         {
             inputState = PlayerTurnInputState.ATTACK;
-            currentlyTargetedUnit = targetableUnits[0];
+            currentlyUsingWeapon = weapon;
+            ClearMovementIndicators();
+            uiController.InitializeAttackModeOverlay(targetableUnits, targetableUnits[0], weapon);
+            SetCurrentlyTargetedUnit(targetableUnits[0]);
         }
     }
 
-    private void DefaultState()
+    private void EnterDefaultState()
     {
-          if (Input.GetButtonDown("End Turn"))
+        inputState = PlayerTurnInputState.DEFAULT;
+        targetableUnits = null;
+        cameraController.Unlock();
+        cameraController.MoveTo(CurrentUnit.transform.position);
+        uiController.DisableAttackModeOverlay();
+        UpdateMovementIndicators();
+    }
+
+    private void TargetNextUnit()
+    {
+        int currentUnitIndex = 0;
+        for (int i = 0; i < targetableUnits.Count; i++)
         {
-            OnUnitTurnFinished();
-        }
-        else if (Input.GetButtonDown("Select"))
-        {
-            // if an enemy was clicked on, then see if attackable first
-            Collider2D overlap = Physics2D.OverlapPoint(Camera.main.ScreenToWorldPoint(Input.mousePosition), LayerMask.GetMask("EnemyUnit"));
-            if (overlap != null && overlap.gameObject != null)
+            if (targetableUnits[i] == currentlyTargetedUnit)
             {
-                Unit unit = overlap.gameObject.GetComponent<Unit>();
-                if (unit == null)
-                {
-                    Debug.LogError("Enemy unit selected but there is no Unit Component!");
-                    return;
-                }
-
-                // TODO: Debug purpose only - this will all be gone soon anyway
-                Weapon weapon = CurrentUnit.Weapons[0];
-                
-                
-                // Attack enemy
-                if (!CanSpendActionPoints(weapon.ActionPointCost) )
-                {
-                    return;
-                }
-
-                if (mapController.CanUnitAttack(CurrentUnit, unit, weapon))
-                {
-                    CurrentUnit.Attack(weapon, unit, gameController.RoundCount);
-                    SpendActionPoints(weapon.ActionPointCost);
-                    UpdateMovementIndicators(); // Might've killed someone
-                }
-
-                return;
-            }
-
-            // First Move per turn is free, next one costs AP
-            if (hasMoved && !CanSpendActionPoints(MOVEMENT_ACTION_POINT_COST))
-            {
-                return;
-            }
-            
-            // otherwise, try moving to the place clicked on
-            Vector3 worldPos = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 1));
-            Vector3Int cellPosition = mapController.WorldToCell(worldPos);
-            foreach (var tile in tilesInMovementRange)
-            {
-                if (tile.GridPos == cellPosition)
-                {
-                    gameController.MoveUnit(CurrentUnit, tile.GridPos);
-                    if (hasMoved)
-                    {
-                        SpendActionPoints(MOVEMENT_ACTION_POINT_COST);
-                    }
-
-                    hasMoved = true;
-                    UpdateMovementIndicators();
-                    return;
-                }
+                currentUnitIndex = i;
+                break;
             }
         }
+
+        currentUnitIndex++;
+        if (currentUnitIndex >= targetableUnits.Count)
+        {
+            currentUnitIndex = 0;
+        }
+        
+        SetCurrentlyTargetedUnit(targetableUnits[currentUnitIndex]);
+    }
+
+    private void TargetPreviousUnit()
+    {
+        int currentUnitIndex = 0;
+        for (int i = 0; i < targetableUnits.Count; i++)
+        {
+            if (targetableUnits[i] == currentlyTargetedUnit)
+            {
+                currentUnitIndex = i;
+                break;
+            }
+        }
+
+        currentUnitIndex--;
+        if (currentUnitIndex < 0)
+        {
+            currentUnitIndex = targetableUnits.Count - 1;
+        }
+        
+        SetCurrentlyTargetedUnit(targetableUnits[currentUnitIndex]);
+    }
+    
+    private void SetCurrentlyTargetedUnit(Unit unit)
+    {
+        currentlyTargetedUnit = unit;
+        cameraController.FollowUnit(unit);
+        uiController.UpdateTargetedUnit(unit);
     }
     
     private void AttackState()
     {
-        // We have a list of targetable units. Now we just need to displa
+        if (Input.GetButtonDown("Next Selection"))
+        {
+            TargetNextUnit();
+        }
+        else if (Input.GetButtonDown("Previous Selection"))
+        {
+            TargetPreviousUnit();
+        }
+        else if (Input.GetButtonDown("Confirm"))
+        {
+            AttackModeFire();
+        }
+        else if (Input.GetButtonDown("Cancel"))
+        {
+            EnterDefaultState();
+        }
+    }
+
+    private void AttackModeFire()
+    {
+        CurrentUnit.Attack(currentlyUsingWeapon, currentlyTargetedUnit, gameController.RoundCount);
+        SpendActionPoints(currentlyUsingWeapon.ActionPointCost);
+        EnterDefaultState();
     }
 
     private enum PlayerTurnInputState

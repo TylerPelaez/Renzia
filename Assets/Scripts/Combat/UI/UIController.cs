@@ -30,10 +30,17 @@ public class UIController : MonoBehaviour
     
     [SerializeField]
     private TextMeshProUGUI missionOutcomeLabel;
+
+    [SerializeField]
+    private AttackModeUIOverlay attackModeOverlay;
     
     public event EventHandler OnEndTurnButtonClicked;
-    public event EventHandler OnAttackButtonClicked;
-    
+    public event EventHandler<Weapon> OnAttackButtonClicked;
+
+    public event EventHandler OnAttackModePreviousButtonClicked;
+    public event EventHandler OnAttackModeNextButtonClicked;
+    public event EventHandler OnFireButtonClicked;
+
     private void Start()
     {
         endTurnButton.onClick.AddListener(() => OnEndTurnButtonClicked?.Invoke(this, EventArgs.Empty));
@@ -54,29 +61,87 @@ public class UIController : MonoBehaviour
         initiativeOrderUIController.OnTurnEnded();
     }
 
-    public void OnTurnStarted(Unit startingUnit)
+    public void OnTurnStarted(Unit startingUnit, int roundCount)
     {
         actionPanel.SetActive(startingUnit.Team == Team.PLAYER);
         endTurnButton.gameObject.SetActive(startingUnit.Team == Team.PLAYER);
         
         if (startingUnit.Team == Team.PLAYER)
         {
-            foreach (Transform child in actionPanel.transform)
-            {
-                Destroy(child.gameObject);
-            }
+            ResetActionPanel(startingUnit, roundCount);
+        }
+    }
 
-            foreach (var weapon in startingUnit.Weapons)
+    private void ResetActionPanel(Unit currentUnit, int roundCount)
+    {
+        foreach (Transform child in actionPanel.transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        foreach (var weapon in currentUnit.Weapons)
+        {
+            GameObject weaponButton = Instantiate(actionButtonPrefab, actionPanel.transform);
+            Texture2D texture = weapon.ActionPanelButtonTexture;
+            weaponButton.GetComponent<Image>().sprite = Sprite.Create(texture, new Rect(0.0f, 0.0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), ACTION_BUTTON_PIXELS_PER_UNIT);
+            weaponButton.GetComponentInChildren<TextMeshProUGUI>().text = weapon.ActionPointCost.ToString();
+            if (!currentUnit.CanUseWeapon(weapon, roundCount))
             {
-                GameObject weaponButton = Instantiate(actionButtonPrefab, actionPanel.transform);
-                Texture2D texture = weapon.ActionPanelButtonTexture;
-                weaponButton.GetComponent<Image>().sprite = Sprite.Create(texture, new Rect(0.0f, 0.0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), ACTION_BUTTON_PIXELS_PER_UNIT);
-                
-                weaponButton.GetComponent<Button>()?.onClick.AddListener(() => OnAttackButtonClicked?.Invoke(this, EventArgs.Empty));
+                weaponButton.GetComponent<Button>().interactable = false;
+            }
+            else
+            {
+                weaponButton.GetComponent<Button>()?.onClick.AddListener(() => AttackButtonClicked(weapon));
             }
         }
     }
 
+    public void OnPlayerActionTaken(int actionPointsRemaining, Unit unit, int roundCount)
+    {
+        SetActionPointLabel(actionPointsRemaining);
+        ResetActionPanel(unit, roundCount);
+    }
+
+    private void AttackButtonClicked(Weapon weapon)
+    {
+        OnAttackButtonClicked?.Invoke(this, weapon);
+    }
+
+    public void DisableAttackModeOverlay()
+    {
+        attackModeOverlay.gameObject.SetActive(false);
+        actionPanel.SetActive(true);
+        endTurnButton.gameObject.SetActive(true);
+    }
+    
+    public void InitializeAttackModeOverlay(List<Unit> targetableUnits, Unit currentlyTargetedUnit, Weapon weapon)
+    {
+        attackModeOverlay.gameObject.SetActive(true);
+        actionPanel.SetActive(false);
+        endTurnButton.gameObject.SetActive(false);
+        attackModeOverlay.Initialize(targetableUnits, currentlyTargetedUnit, weapon);
+    }
+
+    public void UpdateTargetedUnit(Unit unit)
+    {
+        attackModeOverlay.UpdateTarget(unit);
+    }
+
+    public void AttackModeNextButtonClicked()
+    {
+        OnAttackModeNextButtonClicked?.Invoke(this, EventArgs.Empty);
+    }
+    
+    public void AttackModePreviousButtonClicked()
+    {
+        OnAttackModePreviousButtonClicked?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void AttackModeFireButtonClicked()
+    {
+        OnFireButtonClicked?.Invoke(this, EventArgs.Empty);
+    }
+    
     public void SetMissionObjectiveText(MissionObjective objective)
     {
         switch (objective)
