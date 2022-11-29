@@ -33,9 +33,10 @@ public class CameraController : MonoBehaviour
 			float upperX = Screen.width - lowerX;
 			float lowerY = Screen.height * cameraMovementScreenSpacePct;
 			float upperY = Screen.height - lowerY;
-			
-			
-			Vector3 movementDirection = new Vector3(mousePos.x <= lowerX ? -1 : mousePos.x >= upperX ? 1 : 0, mousePos.y <= lowerY ? -1 : mousePos.y >= upperY ? 1 : 0, 0).normalized;
+
+
+			Vector3 movementDirection = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0f).normalized;
+				// new Vector3(mousePos.x <= lowerX ? -1 : mousePos.x >= upperX ? 1 : 0, mousePos.y <= lowerY ? -1 : mousePos.y >= upperY ? 1 : 0, 0).normalized;
 			Vector3 newPosition = transform.position + (movementDirection * speed * Time.deltaTime);
 
 			if (newPosition.x < Bounds.min.x || newPosition.y < Bounds.min.y || newPosition.x > Bounds.max.x ||

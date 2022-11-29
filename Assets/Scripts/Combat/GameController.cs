@@ -28,6 +28,7 @@ public class GameController : MonoBehaviour
 
 	void Start()
     {
+	    Screen.SetResolution(1920,1080,true);
 	    stateMachine.Add(new PlayerTurnState(mapController, uiController, this, cameraController));
 		stateMachine.Add(new EnemyTurnState(mapController, this));
 		stateMachine.Add(new State<GameState>(GameState.TRANSITION));
