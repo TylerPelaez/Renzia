@@ -27,4 +27,6 @@
         CurrentUnit = null;
         gameController.OnUnitTurnFinished();
     }
+
+    public virtual void OnUnitDeath(Unit unit) {}
 }

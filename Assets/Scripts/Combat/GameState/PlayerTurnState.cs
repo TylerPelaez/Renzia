@@ -20,19 +20,27 @@ public class PlayerTurnState : TurnState
     private readonly UIController uiController;
     private readonly CameraController cameraController;
     
+    private const int STARTING_ACTION_POINTS = 2;
     private const int MAX_ACTION_POINTS = 4;
+
     private const int MOVEMENT_ACTION_POINT_COST = 1;
-    
-    public int ActionPoints { get; private set; }
+
+    private int actionPoints;
+
+    private int ActionPoints
+    {
+        get => actionPoints;
+        set => actionPoints = value > MAX_ACTION_POINTS ? MAX_ACTION_POINTS : value;
+    }
 
     public PlayerTurnState(MapController mapController, UIController uiController, GameController gameController, CameraController cameraController) : base(mapController, gameController, GameState.PLAYER_TURN)
     {
         this.uiController = uiController;
         this.cameraController = cameraController;
-        ActionPoints = MAX_ACTION_POINTS;
+        ActionPoints = STARTING_ACTION_POINTS;
         uiController.SetActionPointLabel(ActionPoints);
         uiController.OnEndTurnButtonClicked += (caller, args) => OnUnitTurnFinished();
-        uiController.OnAttackButtonClicked += (caller, args) => EnterAttackMode(0);
+        uiController.OnAttackButtonClicked += (caller, weapon) => EnterAttackMode(weapon);
         uiController.OnAttackModeNextButtonClicked += (caller, args) => TargetNextUnit();
         uiController.OnAttackModePreviousButtonClicked += (caller, args) => TargetPreviousUnit();
         uiController.OnFireButtonClicked += (caller, args) => AttackModeFire();
@@ -92,7 +100,6 @@ public class PlayerTurnState : TurnState
         
         // NOTE: THIS IS IMPORTANT FOR MOVEMENT LOGIC IN GENERAL, NOT JUST INDICATORS.
         List<MapTile> allMapTilesInRange = mapController.GetAllTilesInRange(unitPos, CurrentUnit.TotalMovement);
-        tilesInMovementRange = new Dictionary<Vector3Int, MapTile>();
         
         Vector3 offset = 1.5f * Vector3.forward;
         movementIndicators = new Dictionary<Vector3Int, GameObject>(allMapTilesInRange.Count);
@@ -112,6 +119,7 @@ public class PlayerTurnState : TurnState
                 GameObject.Destroy(indicator.Value);
             }
         }
+        tilesInMovementRange = new Dictionary<Vector3Int, MapTile>();
     }
 
     private void DefaultState()
@@ -174,9 +182,8 @@ public class PlayerTurnState : TurnState
         }
     }
     
-    private void EnterAttackMode(int weaponIndex)
+    private void EnterAttackMode(Weapon weapon)
     {
-        Weapon weapon = CurrentUnit.Weapons[weaponIndex];
         if (!CanSpendActionPoints(weapon.ActionPointCost))
         {
             return;
@@ -206,6 +213,10 @@ public class PlayerTurnState : TurnState
             ClearMovementIndicators();
             uiController.InitializeAttackModeOverlay(targetableUnits, targetableUnits[0], weapon);
             SetCurrentlyTargetedUnit(targetableUnits[0]);
+            if (movementActionPointCostIndicator != null)
+            {
+                GameObject.Destroy(movementActionPointCostIndicator);
+            }
         }
     }
 
@@ -293,6 +304,15 @@ public class PlayerTurnState : TurnState
         CurrentUnit.Attack(currentlyUsingWeapon, currentlyTargetedUnit, gameController.RoundCount);
         SpendActionPoints(currentlyUsingWeapon.ActionPointCost);
         EnterDefaultState();
+    }
+
+    public override void OnUnitDeath(Unit unit)
+    {
+        base.OnUnitDeath(unit);
+        if (unit.Team == Team.ENEMY)
+        {
+            ActionPoints++;
+        }
     }
 
     private enum PlayerTurnInputState

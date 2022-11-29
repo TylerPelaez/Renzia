@@ -132,13 +132,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d38480b22c2e99e46baf4137985d4b43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <Name>k__BackingField: 
+  <Name>k__BackingField: Player
   <TotalMovement>k__BackingField: 3
   <Weapons>k__BackingField:
   - {fileID: 11400000, guid: 725c8ba75529f5645ac603a4cf1ffdc1, type: 2}
-  <MaxHealth>k__BackingField: 5
+  - {fileID: 11400000, guid: d386df4fd895caf48aa0a88aa8c2728e, type: 2}
+  <MaxHealth>k__BackingField: 6
   <Health>k__BackingField: 0
-  <Initiative>k__BackingField: 10
+  <Initiative>k__BackingField: 12
   <Team>k__BackingField: 0
   healthBarUI: {fileID: 5681152040917701054}
   initiativeOrderPortrait: {fileID: 2800000, guid: ee9fa9646713d924f995edbd26b57a91, type: 3}

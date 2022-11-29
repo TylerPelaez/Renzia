@@ -162,29 +162,6 @@ public class MapController : MonoBehaviour
         tiles[7] = GetTileAtGridCellPosition(cellPosition + Vector3Int.right + Vector3Int.up);
         return tiles;
     }
-    
-    private void DFS(Dictionary<Vector3Int, MapTile> visited, Vector3Int position, int range, bool occupiedTilesAreWalkable)
-    {
-        if (!visited.ContainsKey(position))
-        {
-            visited.Add(position, GetTileAtGridCellPosition(position));
-        }
-
-        if (range == 0)
-        {
-            return;
-        }
-
-        MapTile[] testTiles = GetAdjacentTilesToPosition(position);
-
-        foreach (MapTile test in testTiles)
-        {
-            if (test != null && test.Walkable && !visited.ContainsKey(test.GridPos) && (occupiedTilesAreWalkable || test.CurrentUnit == null))
-            {
-                DFS(visited, test.GridPos, range - 1, occupiedTilesAreWalkable);
-            }
-        }
-    }
 
     private HashSet<Vector3Int> BreadthFirstSearchInRange(MapTile origin, int range, bool occupiedTilesAreWalkable)
     {
@@ -311,11 +288,25 @@ public class MapController : MonoBehaviour
 
     public bool CanUnitAttack(Unit attacker, Unit target, Weapon weaponUsed)
     {
+        if (!attacker.CanUseWeapon(weaponUsed, gameController.RoundCount))
+        {
+            return false;
+        }
+        
         Vector3Int attackerPosition = WorldToCell(attacker.transform.position);
         Vector3Int targetPosition = WorldToCell(target.transform.position);
 
-        float distance = Mathf.Sqrt(Mathf.Pow(attackerPosition.x - targetPosition.x, 2) + Mathf.Pow(attackerPosition.y - targetPosition.y, 2));
-        return distance < weaponUsed.Range && HasLineOfSight(attackerPosition, targetPosition) && attacker.CanUseWeapon(weaponUsed, gameController.RoundCount);
+        List<MapTile> tilesInRange = GetAllTilesInRange(attackerPosition, weaponUsed.Range, false, true);
+        
+        foreach (var tile in tilesInRange)
+        {
+            if (tile.GridPos == targetPosition)
+            {
+                return HasLineOfSight(attackerPosition, targetPosition);
+            }
+        }
+
+        return false;
     }
 
     public void InitializeUnit(Unit unit)

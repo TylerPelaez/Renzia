@@ -187,6 +187,11 @@ public class GameController : MonoBehaviour
 
 		mapController.OnUnitDeath(unit);
 		initiativeOrder.Remove(unit);
+
+		if (stateMachine.GetState(GameState.PLAYER_TURN) is TurnState turnState)
+		{
+			turnState.OnUnitDeath(unit);
+		}
 		
 		uiController.ResetInitiativeOrderUI(initiativeOrder);
 
@@ -264,7 +269,7 @@ public class GameController : MonoBehaviour
 
 		unit.StartMove(shortestPathWorldPositions);
 		
-		uiController.SetEnabled(false);
+		uiController.SetEnabled(false, unit, RoundCount);
 	}
 
 	private void OnUnitMovementComplete(Object caller, EventArgs args)
@@ -274,6 +279,6 @@ public class GameController : MonoBehaviour
 			return;
 		}
 		
-		uiController.SetEnabled(true);
+		uiController.SetEnabled(true, unit, RoundCount);
 	}
 }

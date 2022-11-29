@@ -152,14 +152,21 @@ public class UIController : MonoBehaviour
         }
     }
 
-    public void SetEnabled(bool isEnabled)
+    public void SetEnabled(bool isEnabled, Unit currentUnit, int roundCount)
     {
-        foreach (Transform child in actionPanel.transform)
-        {
-            child.gameObject.GetComponent<Button>().interactable = isEnabled;
-        }
-        
         endTurnButton.interactable = isEnabled;
+
+        if (!isEnabled)
+        {
+            foreach (Transform child in actionPanel.transform)
+            {
+                child.gameObject.GetComponent<Button>().interactable = false;
+            }
+        }
+        else
+        {
+            ResetActionPanel(currentUnit, roundCount);
+        }
     }
 
     public void ShowOutcome(bool victory)

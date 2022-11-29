@@ -49,7 +49,7 @@ public class EnemyTurnState : TurnState
 
         // TODO: Select Weapon for enemy attack?
         // TODO: Animate Attack
-        if (!hasAttacked && currentTarget != null)
+        if (!hasAttacked && currentTarget != null && mapController.CanUnitAttack(CurrentUnit, currentTarget, CurrentUnit.Weapons[0]))
         {
             Attack(currentTarget, CurrentUnit.Weapons[0]);
             return;
