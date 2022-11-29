@@ -125,17 +125,18 @@ public class MapController : MonoBehaviour
 
     public List<MapTile> GetAllTilesInRange(Vector3Int cellPosition, int maxDistance, bool includeStart, bool includeOccupiedTiles)
     {
-        Dictionary<Vector3Int, MapTile> visited = new Dictionary<Vector3Int, MapTile>();
-        DFS(visited, cellPosition, maxDistance, includeOccupiedTiles);
-
+        // Dictionary<Vector3Int, MapTile> visited = new Dictionary<Vector3Int, MapTile>();
+        // DFS(visited, cellPosition, maxDistance, includeOccupiedTiles);
+        HashSet<Vector3Int> tilesInRange = BreadthFirstSearchInRange(GetTileAtGridCellPosition(cellPosition), maxDistance, includeOccupiedTiles);
+        
         List<MapTile> result = new List<MapTile>();
-        foreach (MapTile tile in visited.Values)
+        foreach (var position in tilesInRange)
         {
-            if (tile.GridPos == cellPosition && !includeStart)
+            if (position == cellPosition && !includeStart)
             {
                 continue;
             }
-            result.Add(tile);
+            result.Add(GetTileAtGridCellPosition(position));
         }
 
         return result;
@@ -183,6 +184,52 @@ public class MapController : MonoBehaviour
                 DFS(visited, test.GridPos, range - 1, occupiedTilesAreWalkable);
             }
         }
+    }
+
+    private HashSet<Vector3Int> BreadthFirstSearchInRange(MapTile origin, int range, bool occupiedTilesAreWalkable)
+    {
+        Queue<MapTile> currentDistanceQueue = new Queue<MapTile>();
+        Queue<MapTile> nextDistanceQueue = new Queue<MapTile>();
+
+        HashSet<Vector3Int> visited = new HashSet<Vector3Int>();
+        int distanceFromOrigin = 0;
+        
+        currentDistanceQueue.Enqueue(origin);
+        visited.Add(origin.GridPos);
+
+        while (true)
+        {
+            while (currentDistanceQueue.Count > 0)
+            {
+                MapTile currentTile = currentDistanceQueue.Dequeue();
+                
+                MapTile[] testTiles = GetAdjacentTilesToPosition(currentTile.GridPos);
+
+                foreach (MapTile test in testTiles)
+                {
+                    if (test != null && test.Walkable && !visited.Contains(test.GridPos) && (occupiedTilesAreWalkable || test.CurrentUnit == null))
+                    {
+                        nextDistanceQueue.Enqueue(test);
+                        visited.Add(test.GridPos);
+                    }
+                }
+            }
+
+            if (nextDistanceQueue.Count == 0)
+            {
+                break;
+            }
+
+            currentDistanceQueue = nextDistanceQueue;
+            nextDistanceQueue = new Queue<MapTile>();
+            distanceFromOrigin++;
+            if (distanceFromOrigin == range)
+            {
+                break;
+            }
+        }
+
+        return visited;
     }
 
     /***

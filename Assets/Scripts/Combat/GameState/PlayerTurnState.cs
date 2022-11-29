@@ -7,8 +7,10 @@ public class PlayerTurnState : TurnState
     private PlayerTurnInputState inputState;
     private bool hasMoved;
     
-    private List<MapTile> tilesInMovementRange;
-    private List<GameObject> movementIndicators;
+    private Dictionary<Vector3Int, MapTile> tilesInMovementRange;
+    private Dictionary<Vector3Int, GameObject> movementIndicators;
+    private Vector3Int currentlyHoveredTilePosition;
+    private GameObject movementActionPointCostIndicator;
 
     // Attack Mode vars
     private List<Unit> targetableUnits;
@@ -47,12 +49,7 @@ public class PlayerTurnState : TurnState
     public override void Exit()
     {
         base.Exit();
-        foreach (var indicator in movementIndicators)
-        {
-            GameObject.Destroy(indicator);    
-        }
-
-        movementIndicators = null;
+        ClearMovementIndicators();
     }
 
     public override void Update()
@@ -94,13 +91,15 @@ public class PlayerTurnState : TurnState
         Vector3 unitPos = mapController.CellToWorld(CurrentUnit.CurrentTile.GridPos);
         
         // NOTE: THIS IS IMPORTANT FOR MOVEMENT LOGIC IN GENERAL, NOT JUST INDICATORS.
-        tilesInMovementRange = mapController.GetAllTilesInRange(unitPos, CurrentUnit.TotalMovement);
-
+        List<MapTile> allMapTilesInRange = mapController.GetAllTilesInRange(unitPos, CurrentUnit.TotalMovement);
+        tilesInMovementRange = new Dictionary<Vector3Int, MapTile>();
+        
         Vector3 offset = 1.5f * Vector3.forward;
-        movementIndicators = new List<GameObject>(tilesInMovementRange.Count);
-        foreach (MapTile tile in tilesInMovementRange)
+        movementIndicators = new Dictionary<Vector3Int, GameObject>(allMapTilesInRange.Count);
+        foreach (MapTile tile in allMapTilesInRange)
         {
-            movementIndicators.Add(GameObject.Instantiate(AddressablesManager.Instance.Get("MovementIndicator"), mapController.CellToWorld(tile.GridPos) + offset, Quaternion.identity));
+            movementIndicators[tile.GridPos] = GameObject.Instantiate(AddressablesManager.Instance.Get("MovementIndicator"), mapController.CellToWorld(tile.GridPos) + offset, Quaternion.identity);
+            tilesInMovementRange[tile.GridPos] = tile;
         }
     }
 
@@ -110,18 +109,44 @@ public class PlayerTurnState : TurnState
         {
             foreach (var indicator in movementIndicators)
             {
-                GameObject.Destroy(indicator);
+                GameObject.Destroy(indicator.Value);
             }
         }
     }
 
     private void DefaultState()
     {
-          if (Input.GetButtonDown("End Turn"))
+        Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 1));
+        Vector3Int mouseCellPosition = mapController.WorldToCell(mouseWorldPosition);
+        
+        if (mouseCellPosition != currentlyHoveredTilePosition && tilesInMovementRange.ContainsKey(mouseCellPosition))
         {
-            OnUnitTurnFinished();
+            currentlyHoveredTilePosition = mouseCellPosition;
+            if (movementActionPointCostIndicator != null)
+            {
+                GameObject.Destroy(movementActionPointCostIndicator);
+            }
+
+            if (hasMoved)
+            {
+                movementActionPointCostIndicator = GameObject.Instantiate(
+                    AddressablesManager.Instance.Get("MovementCostIndicator"), mapController.CellToWorld(mouseCellPosition), Quaternion.identity);
+            }
+
+            List<Vector3Int> pathToHoveredTile = mapController.GetShortestPath(CurrentUnit.CurrentTile.GridPos, mouseCellPosition);
+            HashSet<Vector3Int> tilesInPath = new HashSet<Vector3Int>(pathToHoveredTile);
+
+            foreach (var pair in movementIndicators)
+            {
+                SpriteRenderer renderer = pair.Value.GetComponent<SpriteRenderer>();
+                Color newColor = tilesInPath.Contains(pair.Key) ? Color.yellow : Color.white;
+                newColor.a = renderer.color.a;
+                renderer.color = newColor;
+            }
         }
-        else if (Input.GetButtonDown("Select"))
+        
+        
+        if (Input.GetButtonDown("Select"))
         {
             // First Move per turn is free, next one costs AP
             if (hasMoved && !CanSpendActionPoints(MOVEMENT_ACTION_POINT_COST))
@@ -130,11 +155,10 @@ public class PlayerTurnState : TurnState
             }
             
             // otherwise, try moving to the place clicked on
-            Vector3 worldPos = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 1));
-            Vector3Int cellPosition = mapController.WorldToCell(worldPos);
-            foreach (var tile in tilesInMovementRange)
+            foreach (var positionAndTile in tilesInMovementRange)
             {
-                if (tile.GridPos == cellPosition)
+                MapTile tile = positionAndTile.Value;
+                if (tile.GridPos == mouseCellPosition)
                 {
                     gameController.MoveUnit(CurrentUnit, tile.GridPos);
                     if (hasMoved)

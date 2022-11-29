@@ -27,7 +27,8 @@ public class AddressablesManager
     {
         List<string> assetKeys = new List<string>();
         assetKeys.Add("MovementIndicator");
-
+        assetKeys.Add("MovementCostIndicator");
+        
         List<AsyncOperationHandle> opList = new List<AsyncOperationHandle>();
         
         foreach (var assetKey in assetKeys)
