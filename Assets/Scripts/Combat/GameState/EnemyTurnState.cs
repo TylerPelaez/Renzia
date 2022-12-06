@@ -5,12 +5,17 @@ using Object = System.Object;
 
 public class EnemyTurnState : TurnState
 {
-    private float waitTimer = 0.5f;
-    private float waitTimeStarted;
+    private float turnStartDelayTimerTime = 0.5f;
+    private float turnStartDelayTimerStartTime;
+
+    private bool turnEndDelayTimerRunning;
+    private float turnEndDelayTimerTime = 0.5f;
+    private float turnEndDelayTimerStartTime;
 
     private bool isMoving;
     private bool hasMoved;
     private bool hasAttacked;
+    private bool isAttacking;
     private Unit currentTarget;
     
     
@@ -19,10 +24,12 @@ public class EnemyTurnState : TurnState
     public override void Enter()
     {
         base.Enter();
-        waitTimeStarted = Time.time;
+        turnStartDelayTimerStartTime = Time.time;
+        turnEndDelayTimerRunning = false;
         isMoving = false;
         hasMoved = false;
         hasAttacked = false;
+        isAttacking = false;
         CurrentUnit.OnMovementComplete += OnUnitMovementComplete;
         currentTarget = null;
     }
@@ -30,7 +37,7 @@ public class EnemyTurnState : TurnState
     public override void Update()
     {
         base.Update();
-        if (Time.time - waitTimer < waitTimeStarted)
+        if (Time.time - turnStartDelayTimerTime < turnStartDelayTimerStartTime)
         {
             return;
         }
@@ -47,6 +54,11 @@ public class EnemyTurnState : TurnState
             return;
         }
 
+        if (isAttacking)
+        {
+            return;
+        }
+
         // TODO: Select Weapon for enemy attack?
         // TODO: Animate Attack
         if (!hasAttacked && currentTarget != null && mapController.CanUnitAttack(CurrentUnit, currentTarget, CurrentUnit.Weapons[0]))
@@ -55,7 +67,16 @@ public class EnemyTurnState : TurnState
             return;
         }
 
-        OnUnitTurnFinished();
+        if (!turnEndDelayTimerRunning)
+        {
+            turnEndDelayTimerRunning = true;
+            turnEndDelayTimerStartTime = Time.time;
+        }
+
+        if (Time.time - turnEndDelayTimerStartTime > turnEndDelayTimerTime)
+        {
+            OnUnitTurnFinished();
+        }
     }
 
     private void Move()

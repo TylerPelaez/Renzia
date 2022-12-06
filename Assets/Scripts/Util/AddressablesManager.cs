@@ -26,6 +26,7 @@ public class AddressablesManager
     private void Load()
     {
         List<string> assetKeys = new List<string>();
+        assetKeys.Add("AttackIndicator");
         assetKeys.Add("MovementIndicator");
         assetKeys.Add("MovementCostIndicator");
         

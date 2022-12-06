@@ -264,7 +264,7 @@ public class GameController : MonoBehaviour
 		{
 			Vector3 position = mapController.CellToWorld(gridPos);
 			// TODO: FIX THIS if you want animations to work with higher z-value tiles
-			position.z = 2;
+			position.z = 3;
 			shortestPathWorldPositions.Add(position);
 		}
 

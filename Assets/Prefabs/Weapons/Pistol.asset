@@ -19,4 +19,4 @@ MonoBehaviour:
   <CritChance>k__BackingField: 0.1
   <ActionPointCost>k__BackingField: 0
   <TurnCooldown>k__BackingField: 1
-  <ActionPanelButtonTexture>k__BackingField: {fileID: 2800000, guid: 1e36b12815d985e4a9d4e35566a6f32e, type: 3}
+  <ActionPanelButtonTexture>k__BackingField: {fileID: 2800000, guid: dbee216d9a4546f4cace2ecf985e648d, type: 3}

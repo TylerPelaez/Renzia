@@ -12,6 +12,8 @@ public class PlayerTurnState : TurnState
     private Vector3Int currentlyHoveredTilePosition;
     private GameObject movementActionPointCostIndicator;
 
+    private Dictionary<Vector3Int, GameObject> attackRangeIndicators;
+
     // Attack Mode vars
     private List<Unit> targetableUnits;
     private Unit currentlyTargetedUnit;
@@ -44,6 +46,8 @@ public class PlayerTurnState : TurnState
         uiController.OnAttackModeNextButtonClicked += (caller, args) => TargetNextUnit();
         uiController.OnAttackModePreviousButtonClicked += (caller, args) => TargetPreviousUnit();
         uiController.OnFireButtonClicked += (caller, args) => AttackModeFire();
+        uiController.OnAttackButtonHovered += (caller, weapon) => InstantiateAttackRangeIndicators(weapon);
+        uiController.OnAttackButtonUnhovered += (caller, weapon) => ClearAttackRangeIndicators();
     }
 
     public override void Enter()
@@ -101,7 +105,7 @@ public class PlayerTurnState : TurnState
         // NOTE: THIS IS IMPORTANT FOR MOVEMENT LOGIC IN GENERAL, NOT JUST INDICATORS.
         List<MapTile> allMapTilesInRange = mapController.GetAllTilesInRange(unitPos, CurrentUnit.TotalMovement);
         
-        Vector3 offset = 1.5f * Vector3.forward;
+        Vector3 offset = 2.5f * Vector3.forward;
         movementIndicators = new Dictionary<Vector3Int, GameObject>(allMapTilesInRange.Count);
         foreach (MapTile tile in allMapTilesInRange)
         {
@@ -120,6 +124,11 @@ public class PlayerTurnState : TurnState
             }
         }
         tilesInMovementRange = new Dictionary<Vector3Int, MapTile>();
+        
+        if (movementActionPointCostIndicator != null)
+        {
+            GameObject.Destroy(movementActionPointCostIndicator);
+        }
     }
 
     private void DefaultState()
@@ -127,7 +136,7 @@ public class PlayerTurnState : TurnState
         Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 1));
         Vector3Int mouseCellPosition = mapController.WorldToCell(mouseWorldPosition);
         
-        if (mouseCellPosition != currentlyHoveredTilePosition && tilesInMovementRange.ContainsKey(mouseCellPosition))
+        if (!InputUtil.IsPointerOverUIElement() && mouseCellPosition != currentlyHoveredTilePosition && tilesInMovementRange.ContainsKey(mouseCellPosition))
         {
             currentlyHoveredTilePosition = mouseCellPosition;
             if (movementActionPointCostIndicator != null)
@@ -154,7 +163,7 @@ public class PlayerTurnState : TurnState
         }
         
         
-        if (Input.GetButtonDown("Select"))
+        if (Input.GetButtonDown("Select") && !InputUtil.IsPointerOverUIElement())
         {
             // First Move per turn is free, next one costs AP
             if (hasMoved && !CanSpendActionPoints(MOVEMENT_ACTION_POINT_COST))
@@ -210,6 +219,7 @@ public class PlayerTurnState : TurnState
         {
             inputState = PlayerTurnInputState.ATTACK;
             currentlyUsingWeapon = weapon;
+            ClearAttackRangeIndicators();
             ClearMovementIndicators();
             uiController.InitializeAttackModeOverlay(targetableUnits, targetableUnits[0], weapon);
             SetCurrentlyTargetedUnit(targetableUnits[0]);
@@ -277,6 +287,33 @@ public class PlayerTurnState : TurnState
         currentlyTargetedUnit = unit;
         cameraController.FollowUnit(unit);
         uiController.UpdateTargetedUnit(unit);
+    }
+
+    private void InstantiateAttackRangeIndicators(Weapon weapon)
+    {
+        ClearAttackRangeIndicators();
+
+        Vector3 unitPos = mapController.CellToWorld(CurrentUnit.CurrentTile.GridPos);
+        List<MapTile> allMapTilesInRange = mapController.GetAllTilesInRange(unitPos, weapon.Range, false, true);
+        
+        Vector3 offset = 2.6f * Vector3.forward;
+        foreach (MapTile tile in allMapTilesInRange)
+        {
+            attackRangeIndicators[tile.GridPos] = GameObject.Instantiate(AddressablesManager.Instance.Get("AttackIndicator"), mapController.CellToWorld(tile.GridPos) + offset, Quaternion.identity);
+        }
+    }
+
+    private void ClearAttackRangeIndicators()
+    {
+        if (attackRangeIndicators != null)
+        {
+            foreach (var indicator in attackRangeIndicators)
+            {
+                GameObject.Destroy(indicator.Value);
+            }
+        }
+
+        attackRangeIndicators = new Dictionary<Vector3Int, GameObject>();
     }
     
     private void AttackState()

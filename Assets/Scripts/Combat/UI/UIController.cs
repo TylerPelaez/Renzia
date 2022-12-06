@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -36,10 +37,14 @@ public class UIController : MonoBehaviour
     
     public event EventHandler OnEndTurnButtonClicked;
     public event EventHandler<Weapon> OnAttackButtonClicked;
+    
+    public event EventHandler<Weapon> OnAttackButtonHovered;
+    public event EventHandler<Weapon> OnAttackButtonUnhovered;
 
     public event EventHandler OnAttackModePreviousButtonClicked;
     public event EventHandler OnAttackModeNextButtonClicked;
     public event EventHandler OnFireButtonClicked;
+
 
     private void Start()
     {
@@ -93,6 +98,9 @@ public class UIController : MonoBehaviour
             {
                 weaponButton.GetComponent<Button>()?.onClick.AddListener(() => AttackButtonClicked(weapon));
             }
+
+            weaponButton.GetComponent<HoverableButton>().OnHoverEnter += (sender, args) => OnAttackButtonHovered?.Invoke(this, weapon);
+            weaponButton.GetComponent<HoverableButton>().OnHoverExit += (sender, args) => OnAttackButtonUnhovered?.Invoke(this, weapon);
         }
     }
 

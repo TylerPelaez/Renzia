@@ -26,6 +26,10 @@ MonoBehaviour:
     m_Address: MovementCostIndicator
     m_ReadOnly: 0
     m_SerializedLabels: []
+  - m_GUID: a2e62d35329abac4faba8e6c84afbbef
+    m_Address: AttackIndicator
+    m_ReadOnly: 0
+    m_SerializedLabels: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 246614998b657d547883c6cf06b4d613, type: 2}
   m_SchemaSet:
