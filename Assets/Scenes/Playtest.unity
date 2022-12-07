@@ -3055,6 +3055,8 @@ MonoBehaviour:
   missionOutcomePanel: {fileID: 316248457}
   missionOutcomeLabel: {fileID: 1936233966}
   attackModeOverlay: {fileID: 910191451}
+  mapController: {fileID: 521341897}
+  gameController: {fileID: 1093698172}
 --- !u!1 &1093698171
 GameObject:
   m_ObjectHideFlags: 0

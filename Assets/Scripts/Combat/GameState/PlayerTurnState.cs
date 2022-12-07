@@ -178,10 +178,7 @@ public class PlayerTurnState : TurnState
                 if (tile.GridPos == mouseCellPosition)
                 {
                     gameController.MoveUnit(CurrentUnit, tile.GridPos);
-                    if (hasMoved)
-                    {
-                        SpendActionPoints(MOVEMENT_ACTION_POINT_COST);
-                    }
+                    SpendActionPoints(hasMoved ? MOVEMENT_ACTION_POINT_COST : 0);
 
                     hasMoved = true;
                     UpdateMovementIndicators();
@@ -238,6 +235,7 @@ public class PlayerTurnState : TurnState
         cameraController.MoveTo(CurrentUnit.transform.position);
         uiController.DisableAttackModeOverlay();
         UpdateMovementIndicators();
+        
     }
 
     private void TargetNextUnit()
@@ -349,6 +347,7 @@ public class PlayerTurnState : TurnState
         if (unit.Team == Team.ENEMY)
         {
             ActionPoints++;
+            uiController.OnPlayerActionTaken(actionPoints, CurrentUnit, gameController.RoundCount);
         }
     }
 

@@ -34,6 +34,11 @@ public class UIController : MonoBehaviour
 
     [SerializeField]
     private AttackModeUIOverlay attackModeOverlay;
+
+    [SerializeField]
+    private MapController mapController;
+
+    [SerializeField] private GameController gameController;
     
     public event EventHandler OnEndTurnButtonClicked;
     public event EventHandler<Weapon> OnAttackButtonClicked;
@@ -84,6 +89,16 @@ public class UIController : MonoBehaviour
             Destroy(child.gameObject);
         }
 
+        LinkedList<Unit> allUnits = gameController.GetAllUnits();
+        List<Unit> enemyUnits = new List<Unit>();
+        foreach (var unit in allUnits)
+        {
+            if (unit.Team == Team.ENEMY)
+            {
+                enemyUnits.Add(unit);
+            }
+        }
+
         foreach (var weapon in currentUnit.Weapons)
         {
             GameObject weaponButton = Instantiate(actionButtonPrefab, actionPanel.transform);
@@ -96,7 +111,25 @@ public class UIController : MonoBehaviour
             }
             else
             {
-                weaponButton.GetComponent<Button>()?.onClick.AddListener(() => AttackButtonClicked(weapon));
+                bool foundAttackableEnemy = false;
+                foreach (var enemyUnit in enemyUnits)
+                {
+                    if (mapController.CanUnitAttack(currentUnit, enemyUnit, weapon))
+                    {
+                        foundAttackableEnemy = true;
+                        break;
+                    }
+                }
+
+                if (foundAttackableEnemy)
+                {
+                    weaponButton.GetComponent<Button>().interactable = true;
+                    weaponButton.GetComponent<Button>()?.onClick.AddListener(() => AttackButtonClicked(weapon));
+                }
+                else
+                {
+                    weaponButton.GetComponent<Button>().interactable = false;
+                }
             }
 
             weaponButton.GetComponent<HoverableButton>().OnHoverEnter += (sender, args) => OnAttackButtonHovered?.Invoke(this, weapon);
