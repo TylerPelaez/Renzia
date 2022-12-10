@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Util;
 
@@ -129,6 +130,8 @@ public class PlayerTurnState : TurnState
         {
             GameObject.Destroy(movementActionPointCostIndicator);
         }
+
+        currentlyHoveredTilePosition = new Vector3Int(Int32.MaxValue, Int32.MaxValue, Int32.MaxValue);
     }
 
     private void DefaultState()
@@ -177,15 +180,20 @@ public class PlayerTurnState : TurnState
                 MapTile tile = positionAndTile.Value;
                 if (tile.GridPos == mouseCellPosition)
                 {
-                    gameController.MoveUnit(CurrentUnit, tile.GridPos);
-                    SpendActionPoints(hasMoved ? MOVEMENT_ACTION_POINT_COST : 0);
 
-                    hasMoved = true;
-                    UpdateMovementIndicators();
+                    gameController.MoveUnit(CurrentUnit, tile.GridPos, OnUnitMovementComplete);
+                    SpendActionPoints(hasMoved ? MOVEMENT_ACTION_POINT_COST : 0);
+                    EnterWaitingForMovementState();
                     return;
                 }
             }
         }
+    }
+
+    private void OnUnitMovementComplete()
+    {
+        hasMoved = true;
+        EnterDefaultState();
     }
     
     private void EnterAttackMode(Weapon weapon)
@@ -231,11 +239,28 @@ public class PlayerTurnState : TurnState
     {
         inputState = PlayerTurnInputState.DEFAULT;
         targetableUnits = null;
-        cameraController.Unlock();
-        cameraController.MoveTo(CurrentUnit.transform.position);
+        cameraController.SmoothMoveToThenUnlock(CurrentUnit);
         uiController.DisableAttackModeOverlay();
         UpdateMovementIndicators();
-        
+        Debug.Log("DEFAULT STATE");
+    }
+
+    private void EnterWaitingForMovementState()
+    {
+        inputState = PlayerTurnInputState.WAITING_FOR_MOVE;
+        targetableUnits = null;
+        cameraController.FollowUnit(CurrentUnit);
+        uiController.DisableAttackModeOverlay();
+        ClearMovementIndicators();
+    }
+
+    private void EnterWaitingForAttackState(Unit target)
+    {
+        inputState = PlayerTurnInputState.WAITING_FOR_ATTACK;
+        targetableUnits = null;
+        cameraController.FollowUnit(target);
+        uiController.DisableAttackModeOverlay();
+        ClearMovementIndicators();
     }
 
     private void TargetNextUnit()
@@ -336,8 +361,13 @@ public class PlayerTurnState : TurnState
 
     private void AttackModeFire()
     {
-        CurrentUnit.Attack(currentlyUsingWeapon, currentlyTargetedUnit, gameController.RoundCount);
         SpendActionPoints(currentlyUsingWeapon.ActionPointCost);
+        CurrentUnit.StartAttack(currentlyUsingWeapon, currentlyTargetedUnit, gameController.RoundCount, OnAttackFinished);
+        EnterWaitingForAttackState(currentlyTargetedUnit);
+    }
+
+    private void OnAttackFinished()
+    {
         EnterDefaultState();
     }
 
@@ -354,6 +384,8 @@ public class PlayerTurnState : TurnState
     private enum PlayerTurnInputState
     {
         DEFAULT,
-        ATTACK
+        WAITING_FOR_MOVE,
+        ATTACK,
+        WAITING_FOR_ATTACK,
     }
 }

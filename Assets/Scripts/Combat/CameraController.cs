@@ -7,7 +7,12 @@ public class CameraController : MonoBehaviour
 	private const float CAMERA_Z = -0.5f;
 	public float speed = .01f;
 	public float cameraMovementScreenSpacePct = 0.05f;
-	
+
+
+	private float cameraLerpStartTime;
+	private float cameraLerpTime = 0.15f;
+	private Vector3 cameraLerpStartingPosition;
+
 	private State state = State.Unlocked;
 	private Unit following;
 	
@@ -24,19 +29,26 @@ public class CameraController : MonoBehaviour
 	void Update()
 	{
 		switch (state) {
+		case State.SmoothMoveThenUnlock:	
 		case State.Following:
-			MoveTo(following.transform.position);
+			if (following != null)
+			{
+				float t = Mathf.Min((Time.time - cameraLerpStartTime) / cameraLerpTime, 1);
+				Vector3 targetPosition = Vector3.Lerp(cameraLerpStartingPosition, following.transform.position, t);
+
+				MoveTo(targetPosition);
+				if (state == State.SmoothMoveThenUnlock && t >= 1f)
+				{
+					state = State.Unlocked;
+				}
+			} 
+			else if (state == State.SmoothMoveThenUnlock)
+			{
+				state = State.Unlocked;
+			}
 			break;
 		case State.Unlocked:
-			Vector3 mousePos = Input.mousePosition;
-			float lowerX = Screen.width * cameraMovementScreenSpacePct;
-			float upperX = Screen.width - lowerX;
-			float lowerY = Screen.height * cameraMovementScreenSpacePct;
-			float upperY = Screen.height - lowerY;
-
-
 			Vector3 movementDirection = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0f).normalized;
-				// new Vector3(mousePos.x <= lowerX ? -1 : mousePos.x >= upperX ? 1 : 0, mousePos.y <= lowerY ? -1 : mousePos.y >= upperY ? 1 : 0, 0).normalized;
 			Vector3 newPosition = transform.position + (movementDirection * speed * Time.deltaTime);
 
 			if (newPosition.x < Bounds.min.x || newPosition.y < Bounds.min.y || newPosition.x > Bounds.max.x ||
@@ -52,7 +64,15 @@ public class CameraController : MonoBehaviour
 		}
 	}
 
-	public void MoveTo(Vector3 position)
+	public void SmoothMoveToThenUnlock(Unit unit)
+	{
+		state = State.SmoothMoveThenUnlock;
+		following = unit;
+		cameraLerpStartTime = Time.time;
+		cameraLerpStartingPosition = transform.position;
+	}
+
+	private void MoveTo(Vector3 position)
 	{
 		transform.position = new Vector3(position.x, position.y, CAMERA_Z);
 	}
@@ -61,7 +81,8 @@ public class CameraController : MonoBehaviour
 	{
 		state = State.Following;
 		following = unit;
-		MoveTo(unit.transform.position);
+		cameraLerpStartTime = Time.time;
+		cameraLerpStartingPosition = transform.position;
 	}
 
 	public void Unlock()
@@ -74,5 +95,6 @@ public class CameraController : MonoBehaviour
 	private enum State {
 		Unlocked,
 		Following,
+		SmoothMoveThenUnlock,
 	}
 }

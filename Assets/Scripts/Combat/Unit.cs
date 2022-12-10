@@ -33,16 +33,20 @@ public class Unit : MonoBehaviour
 
     private Animator animator;
 
-    private const float TOLERANCE = 0.05f;
     private const float MOVEMENT_SPEED_UNITS_PER_SECOND = 1.2f;
     private LinkedList<Vector3> movementList;
     private Vector3 movementCurrentPosition;
-    private bool moving;
     private float currentTileMovementStartTime;
     private float currentTileMovementTotalTime;
+    private int lastMovementDirection = -1;
+
+    private UnitState state = UnitState.DEFAULT;
+    private Action OnMovementCompleteCallback;
+
+    private Action OnAttackCallback;
+    private Action OnAttackCompleteCallback;
 
     public event EventHandler OnDeath;
-    public event EventHandler OnMovementComplete;
     
     public void Awake()
     {
@@ -64,10 +68,34 @@ public class Unit : MonoBehaviour
         }
     }
 
-    public void Attack(Weapon weapon, Unit target, int currentRoundCount)
+    public void StartAttack(Weapon weapon, Unit target, int currentRoundCount, Action completionCallback)
+    {
+        WeaponLastFiredRoundCount[weapon.Name] = currentRoundCount;
+        int animationDirection = DirectionUtil.GetAnimationSuffixForDirection(transform.position, target.transform.position);
+        
+        OnAttackCallback = () => DoAttack(weapon, target, completionCallback);
+        OnAttackCompleteCallback = () =>
+        {
+            completionCallback?.Invoke();
+            animator.Play("Idle" + animationDirection);
+        };
+
+        animator.Play("Attack" + animationDirection);
+    }
+
+    public void Attack()
+    {
+        OnAttackCallback?.Invoke();
+    }
+
+    public void AttackAnimationComplete()
+    {
+        OnAttackCompleteCallback?.Invoke();
+    }
+    
+    private void DoAttack(Weapon weapon, Unit target, Action completionCallback)
     {
         target.TakeDamage(weapon.RollDamage());
-        WeaponLastFiredRoundCount[weapon.Name] = currentRoundCount;
     }
 
     public bool CanUseWeapon(Weapon weapon, int currentRoundCount)
@@ -75,35 +103,47 @@ public class Unit : MonoBehaviour
         return !WeaponLastFiredRoundCount.ContainsKey(weapon.Name) || currentRoundCount - WeaponLastFiredRoundCount[weapon.Name] >= weapon.TurnCooldown;
     }
 
-    public void StartMove(List<Vector3> path)
+    public void StartMove(List<Vector3> path, Action onComplete)
     {
         movementList = new LinkedList<Vector3>(path);
-        moving = true;
+        state = UnitState.MOVING;
+        OnMovementCompleteCallback = onComplete;
         CurrentMovementFinished();
     }
 
     private void Update()
     {
-        if (moving)
+        switch (state)
         {
-            float t = (Time.time - currentTileMovementStartTime) / currentTileMovementTotalTime;
-            bool currentMovementFinished = false;
-            if (t >= 1f)
-            {
-                t = 1f;
-                currentMovementFinished = true;
-            }
-
-            Vector3 interpolatedPosition = Vector3.Lerp(movementCurrentPosition, movementList.First.Value, t);
-            transform.position = interpolatedPosition;
-
-            if (currentMovementFinished)
-            {
-                CurrentMovementFinished();
-            }
+            case UnitState.MOVING:
+                MoveState();
+                break;
+            case UnitState.ATTACKING:
+                AttackState();
+                break;
         }
     }
 
+    private void MoveState()
+    {
+        float t = (Time.time - currentTileMovementStartTime) / currentTileMovementTotalTime;
+        bool currentMovementFinished = false;
+        if (t >= 1f)
+        {
+            t = 1f;
+            currentMovementFinished = true;
+        }
+
+        Vector3 interpolatedPosition = Vector3.Lerp(movementCurrentPosition, movementList.First.Value, t);
+        transform.position = interpolatedPosition;
+
+        if (currentMovementFinished)
+        {
+            CurrentMovementFinished();
+        }
+    }
+
+    private void AttackState() {}
 
     private void CurrentMovementFinished()
     { 
@@ -111,9 +151,9 @@ public class Unit : MonoBehaviour
         movementList.RemoveFirst();
         if (movementList.Count == 0)
         {
-            moving = false;
-            animator.Play("Idle");
-            OnMovementComplete?.Invoke(this, EventArgs.Empty);
+            state = UnitState.DEFAULT;
+            animator.Play("Idle" + (lastMovementDirection < 0 ? 3 : lastMovementDirection));
+            OnMovementCompleteCallback?.Invoke();
             return;
         }
 
@@ -123,52 +163,15 @@ public class Unit : MonoBehaviour
         currentTileMovementStartTime = Time.time;
         
         // Change animation direction if needed
-        string targetAnimatorStateName;
-        if (Math.Abs(targetPosition.x - movementCurrentPosition.x) < TOLERANCE)
-        {
-            if (targetPosition.y > movementCurrentPosition.y)
-            {
-                targetAnimatorStateName = "Run7";
-            }
-            else
-            {
-                targetAnimatorStateName = "Run3";
-            }
-        }
-        else if (Math.Abs(targetPosition.y - movementCurrentPosition.y) < TOLERANCE)
-        {
-            if (targetPosition.x > movementCurrentPosition.x)
-            {
-                targetAnimatorStateName = "Run1";
-            }
-            else
-            {
-                targetAnimatorStateName = "Run5";
-            }
-        }
-        else if (targetPosition.x > movementCurrentPosition.x)
-        {
-            if (targetPosition.y > movementCurrentPosition.y)
-            {
-                targetAnimatorStateName = "Run0";
-            }
-            else
-            {
-                targetAnimatorStateName = "Run2";
-            }
-        }
-        else
-        {
-            if (targetPosition.y > movementCurrentPosition.y)
-            {
-                targetAnimatorStateName = "Run6";
-            }
-            else
-            {
-                targetAnimatorStateName = "Run4";
-            }
-        }
-        
+        lastMovementDirection = DirectionUtil.GetAnimationSuffixForDirection(movementCurrentPosition, targetPosition);
+        string targetAnimatorStateName = "Run" + lastMovementDirection;
         animator.Play(targetAnimatorStateName);
+    }
+    
+    private enum UnitState
+    {
+        MOVING,
+        ATTACKING,
+        DEFAULT,
     }
 }

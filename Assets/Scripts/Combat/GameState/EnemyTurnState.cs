@@ -30,7 +30,6 @@ public class EnemyTurnState : TurnState
         hasMoved = false;
         hasAttacked = false;
         isAttacking = false;
-        CurrentUnit.OnMovementComplete += OnUnitMovementComplete;
         currentTarget = null;
     }
 
@@ -158,7 +157,7 @@ public class EnemyTurnState : TurnState
             }
         }
 
-        gameController.MoveUnit(CurrentUnit, targetPosition);
+        gameController.MoveUnit(CurrentUnit, targetPosition, OnUnitMovementComplete);
         isMoving = true;
     }
 
@@ -168,16 +167,20 @@ public class EnemyTurnState : TurnState
         {
             return;
         }
-        
-        CurrentUnit.Attack(weaponUsed, target, gameController.RoundCount);
-        // TODO: Animate attack and set this when animation is complete
-        hasAttacked = true;
+
+        CurrentUnit.StartAttack(weaponUsed, target, gameController.RoundCount, OnAttackComplete);
+        isAttacking = true;
     }
 
-    private void OnUnitMovementComplete(Object caller, EventArgs args)
+    private void OnUnitMovementComplete()
     {
-        CurrentUnit.OnMovementComplete -= OnUnitMovementComplete;
         hasMoved = true;
         isMoving = false;
+    }
+
+    private void OnAttackComplete()
+    {
+        isAttacking = false;
+        hasAttacked = true;
     }
 }

@@ -60,7 +60,6 @@ public class GameController : MonoBehaviour
 		{
 			initiativeOrder.AddLast(unit);
 			unit.OnDeath += OnUnitDeath;
-			unit.OnMovementComplete += OnUnitMovementComplete;
 		}
 
 		roundStartNextUnit = initiativeOrder.First.Value;
@@ -119,7 +118,7 @@ public class GameController : MonoBehaviour
 			case Team.PLAYER:
 				stateMachine.SetCurrentState(GameState.PLAYER_TURN);
 				cameraController.Unlock();
-				cameraController.MoveTo(currentUnit.transform.position);
+				cameraController.SmoothMoveToThenUnlock(currentUnit);
 				break;
 			case Team.ENEMY:
 				stateMachine.SetCurrentState(GameState.ENEMY_TURN);
@@ -255,7 +254,7 @@ public class GameController : MonoBehaviour
 		return !foundPlayer;
 	}
 
-	public void MoveUnit(Unit unit, Vector3Int newPosition)
+	public void MoveUnit(Unit unit, Vector3Int newPosition, Action onCompleteCallback)
 	{
 		List<Vector3Int> shortestPath = mapController.GetShortestPath(unit.CurrentTile.GridPos, newPosition);
 		mapController.MoveUnit(unit, newPosition);
@@ -267,19 +266,14 @@ public class GameController : MonoBehaviour
 			position.z = 3;
 			shortestPathWorldPositions.Add(position);
 		}
-
-		unit.StartMove(shortestPathWorldPositions);
 		
 		uiController.SetEnabled(false, unit, RoundCount);
+		unit.StartMove(shortestPathWorldPositions, () => OnUnitMovementComplete(unit, onCompleteCallback));
 	}
 
-	private void OnUnitMovementComplete(Object caller, EventArgs args)
+	private void OnUnitMovementComplete(Unit unit, Action callback)
 	{
-		if (caller is not Unit unit)
-		{
-			return;
-		}
-		
 		uiController.SetEnabled(true, unit, RoundCount);
+		callback?.Invoke();
 	}
 }

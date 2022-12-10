@@ -22,6 +22,7 @@ namespace Util
                 RaycastResult curRaysastResult = eventSystemRaycastResults[index];
                 if (curRaysastResult.gameObject.layer == LayerMask.NameToLayer("UI"))
                 {
+                    // Debug.Log(curRaysastResult.gameObject.name);
                     return true;
                 }
             }
