@@ -33,7 +33,7 @@ public class Unit : MonoBehaviour
 
     private Animator animator;
 
-    private const float MOVEMENT_SPEED_UNITS_PER_SECOND = 1.2f;
+    public float movementSpeedUnitsPerSecond = 1.2f;
     private LinkedList<Vector3> movementList;
     private Vector3 movementCurrentPosition;
     private float currentTileMovementStartTime;
@@ -159,7 +159,7 @@ public class Unit : MonoBehaviour
 
         Vector3 targetPosition = movementList.First.Value;
         float distance = Vector3.Distance(targetPosition, movementCurrentPosition);
-        currentTileMovementTotalTime = distance / MOVEMENT_SPEED_UNITS_PER_SECOND;
+        currentTileMovementTotalTime = distance / movementSpeedUnitsPerSecond;
         currentTileMovementStartTime = Time.time;
         
         // Change animation direction if needed

@@ -77,8 +77,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 6b6f846c3c9ec8243b0b371cd7b6cfab, type: 3}
-  m_Color: {r: 0.2235294, g: 1, b: 0.93392646, a: 1}
+  m_Sprite: {fileID: -324823315, guid: bbd194ad924d5474cbb77136f8a7a318, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -142,7 +142,7 @@ MonoBehaviour:
   <Initiative>k__BackingField: 12
   <Team>k__BackingField: 0
   healthBarUI: {fileID: 5681152040917701054}
-  initiativeOrderPortrait: {fileID: 2800000, guid: ee9fa9646713d924f995edbd26b57a91, type: 3}
+  initiativeOrderPortrait: {fileID: 2800000, guid: 7afac1e25368c0a479a74f8fe041da7d, type: 3}
 --- !u!95 &4758247428370127378
 Animator:
   serializedVersion: 4
@@ -358,6 +358,14 @@ PrefabInstance:
     - target: {fileID: 3477827729175326020, guid: dc17a9d61cd708f449de15881de71012, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3775454563418075878, guid: dc17a9d61cd708f449de15881de71012, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 2.43
+      objectReference: {fileID: 0}
+    - target: {fileID: 3775454563418075878, guid: dc17a9d61cd708f449de15881de71012, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0.38
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: dc17a9d61cd708f449de15881de71012, type: 3}
