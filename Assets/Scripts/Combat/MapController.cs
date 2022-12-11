@@ -231,18 +231,19 @@ public class MapController : MonoBehaviour
         return path;
     }
 
-    private int GetCellDistance(Vector3Int a, Vector3Int b)
+    private float GetCellDistance(Vector3Int a, Vector3Int b)
     {
-        return Mathf.Max(Mathf.Abs(a.x - b.x), Mathf.Abs(a.y - b.y));
+        //Mathf.Max(Mathf.Abs(a.x - b.x), Mathf.Abs(a.y - b.y));
+        return Vector3Int.Distance(a, b); 
     }
 
     public List<Vector3Int> GetShortestPath(Vector3Int start, Vector3Int target)
     {
-        var openSet = new PriorityQueue<Vector3Int, int>();
+        var openSet = new PriorityQueue<Vector3Int, float>();
         var itemsInOpenSet = new HashSet<Vector3Int>();
         var cameFrom = new Dictionary<Vector3Int, Vector3Int>();
         var gScore = new Dictionary<Vector3Int, int>();
-        var fScore = new Dictionary<Vector3Int, int>();
+        var fScore = new Dictionary<Vector3Int, float>();
         gScore[start] = 0;
         fScore[start] = GetCellDistance(start, target);
         openSet.Enqueue(start, fScore[start]);
@@ -267,17 +268,40 @@ public class MapController : MonoBehaviour
                 Vector3Int neighbor = tile.GridPos;
 
                 var tentativeGScore = gScore[current] + 1;
-                if (!gScore.ContainsKey(neighbor) || tentativeGScore < gScore[neighbor])
+                // We want to always prefer the lowest G Score. But when we have a tie, try to keep the path in a straight line
+                if (gScore.ContainsKey(neighbor) && tentativeGScore > gScore[neighbor])
                 {
-                    // This path to neighbor is better than any previous one, record it.
-                    cameFrom[neighbor] = current;
-                    gScore[neighbor] = tentativeGScore;
-                    fScore[neighbor] = tentativeGScore + GetCellDistance(neighbor, target);
-                    if (!itemsInOpenSet.Contains(neighbor))
+                    continue;
+                }
+
+
+                if (gScore.ContainsKey(neighbor) && tentativeGScore == gScore[neighbor])
+                {
+                    if (!cameFrom.ContainsKey(current))
                     {
-                        openSet.Enqueue(neighbor, fScore[neighbor]);
-                        itemsInOpenSet.Add(neighbor);
+                        continue;
                     }
+
+                    Vector3 previous = cameFrom[current];
+
+                    int previousToCurrentDirection = DirectionUtil.GetAnimationSuffixForDirection(previous, current);
+                    int currentToNeighborDirection = DirectionUtil.GetAnimationSuffixForDirection(current, neighbor);
+                    
+                    if (previousToCurrentDirection != currentToNeighborDirection)
+                    {
+                        continue;
+                    }
+                }
+                
+                
+                // This path to neighbor is better than any previous one, record it.
+                cameFrom[neighbor] = current;
+                gScore[neighbor] = tentativeGScore;
+                fScore[neighbor] = tentativeGScore + GetCellDistance(neighbor, target);
+                if (!itemsInOpenSet.Contains(neighbor))
+                {
+                    openSet.Enqueue(neighbor, fScore[neighbor]);
+                    itemsInOpenSet.Add(neighbor);
                 }
             }
         }

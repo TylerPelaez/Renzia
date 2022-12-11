@@ -422,7 +422,6 @@ public class PlayerTurnState : TurnState
             }
         }
         
-        Debug.Log("Reason:" + reason);
         if (reason != null)
         {
             uiController.SetAttackImpossibleLabelActive(true);
