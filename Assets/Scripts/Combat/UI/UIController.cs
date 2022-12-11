@@ -38,7 +38,11 @@ public class UIController : MonoBehaviour
     [SerializeField]
     private MapController mapController;
 
-    [SerializeField] private GameController gameController;
+    [SerializeField]
+    private GameController gameController;
+
+    [SerializeField]
+    private TextMeshProUGUI attackImpossibleLabel;
     
     public event EventHandler OnEndTurnButtonClicked;
     public event EventHandler<Weapon> OnAttackButtonClicked;
@@ -49,6 +53,8 @@ public class UIController : MonoBehaviour
     public event EventHandler OnAttackModePreviousButtonClicked;
     public event EventHandler OnAttackModeNextButtonClicked;
     public event EventHandler OnFireButtonClicked;
+
+    public event EventHandler OnAttackModeExited;
 
 
     private void Start()
@@ -105,7 +111,7 @@ public class UIController : MonoBehaviour
             Texture2D texture = weapon.ActionPanelButtonTexture;
             weaponButton.GetComponent<Image>().sprite = Sprite.Create(texture, new Rect(0.0f, 0.0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), ACTION_BUTTON_PIXELS_PER_UNIT);
             weaponButton.GetComponentInChildren<TextMeshProUGUI>().text = weapon.ActionPointCost.ToString();
-            if (!currentUnit.CanUseWeapon(weapon, roundCount))
+            if (gameController.GetPlayerActionPoints() < weapon.ActionPointCost || !currentUnit.CanUseWeapon(weapon, roundCount))
             {
                 weaponButton.GetComponent<Button>().interactable = false;
             }
@@ -182,6 +188,11 @@ public class UIController : MonoBehaviour
     {
         OnFireButtonClicked?.Invoke(this, EventArgs.Empty);
     }
+
+    public void AttackModeCancelButtonClicked()
+    {
+        OnAttackModeExited?.Invoke(this, EventArgs.Empty);
+    }
     
     public void SetMissionObjectiveText(MissionObjective objective)
     {
@@ -191,6 +202,16 @@ public class UIController : MonoBehaviour
                 missionObjectiveLabel.text = "Kill All Enemies";
                 break;
         }
+    }
+
+    public void SetAttackImpossibleReason(string reason)
+    {
+        attackImpossibleLabel.text = reason;
+    }
+
+    public void SetAttackImpossibleLabelActive(bool active)
+    {
+        attackImpossibleLabel.gameObject.SetActive(active);
     }
 
     public void SetEnabled(bool isEnabled, Unit currentUnit, int roundCount)

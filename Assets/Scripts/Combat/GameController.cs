@@ -276,4 +276,9 @@ public class GameController : MonoBehaviour
 		uiController.SetEnabled(true, unit, RoundCount);
 		callback?.Invoke();
 	}
+
+	public int GetPlayerActionPoints()
+	{
+		return ((PlayerTurnState)stateMachine.GetState(GameState.PLAYER_TURN)).ActionPoints;
+	}
 }
