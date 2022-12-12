@@ -1,39 +1,68 @@
-using System;
-using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+using Object = System.Object;
 
 public class HealthBarUI : MonoBehaviour
 {
-    public RectTransform healthBarGreen;
-    public RectTransform healthBarRed;
-    public TextMeshProUGUI healthLabel;
+    private static readonly Vector2 HEALTH_BAR_OFFSET = new (0, 20);
+    
+    public GameObject healthBarItemPrefab;
 
-    private const float LERP_TIME_LENGTH = 0.5f;
-    private Vector3 lerpStartScale;
-    private Vector3 lerpTargetScale;
-    private float lerpStartTime;
-    private bool lerpActive;
-
-
+    private Unit target;
+    private CanvasScaler canvasScaler;
+    private RectTransform rectTransform;
+    private RectTransform canvasTransform;
+    
     private void Update()
     {
-        if (lerpActive)
+        if (target != null)
         {
-            float t = Mathf.Min((Time.time - lerpStartTime) / LERP_TIME_LENGTH, 1);
-            healthBarGreen.localScale = Vector3.Lerp(lerpStartScale, lerpTargetScale, t);
-            if (t >= 1)
-            {
-                lerpActive = false;
-            }
+            Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(Camera.main, target.transform.position) / canvasScaler.scaleFactor;
+            rectTransform.anchoredPosition = screenPoint - (canvasTransform.sizeDelta / 2.0f) + HEALTH_BAR_OFFSET;
         }
     }
 
-    public void SetHealth(int current, int max)
+    public void Initialize(Unit unit, CanvasScaler scaler, RectTransform canvas)
     {
-        lerpStartTime = Time.time;
-        lerpStartScale = healthBarGreen.localScale;
-        lerpTargetScale = new Vector3((float) current / max, 1, 1);
-        healthLabel.text = current + " / " + max;
-        lerpActive = true;
+        target = unit;
+        target.OnHealthChanged += OnHealthChanged;
+        rectTransform = GetComponent<RectTransform>();
+        canvasScaler = scaler;
+        canvasTransform = canvas;
+        SetHealth(target.Health, target.MaxHealth);
+    }
+
+    private void OnHealthChanged(Object caller, Unit.HealthChangedEventArgs healthChangedEvent)
+    {
+        SetHealth(healthChangedEvent.NewValue, healthChangedEvent.MaxHealth);
+    }
+    
+    private void SetHealth(int current, int max)
+    {
+        if (current <= 0)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        
+        foreach (Transform child in gameObject.transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        for (int i = 0; i < current; i++)
+        {
+            Instantiate(healthBarItemPrefab, transform);
+        }
+        
+        LayoutRebuilder.ForceRebuildLayoutImmediate(GetComponent<RectTransform>());
+    }
+
+    private void OnDestroy()
+    {
+        if (target)
+        {
+            target.OnHealthChanged -= OnHealthChanged;
+        }
     }
 }

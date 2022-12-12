@@ -60,12 +60,14 @@ public class GameController : MonoBehaviour
 		{
 			initiativeOrder.AddLast(unit);
 			unit.OnDeath += OnUnitDeath;
+			unit.OnHealthChanged += OnUnitHealthChanged;
 		}
 
 		roundStartNextUnit = initiativeOrder.First.Value;
 		roundStartPreviousUnit = initiativeOrder.Last.Value;
 		
 		uiController.ResetInitiativeOrderUI(initiativeOrder);
+		uiController.SetupHealthBars(initiativeOrder);
 	}
 
     void FixedUpdate()
@@ -129,6 +131,18 @@ public class GameController : MonoBehaviour
 		uiController.OnTurnStarted(currentUnit, RoundCount);
 	}
 
+	private void OnUnitHealthChanged(Object caller, Unit.HealthChangedEventArgs healthChangedEventArgs)
+	{
+		if (caller is not Unit unit)
+		{
+			Debug.LogError("Unit Health Change did not receive unit");
+			return;
+		}
+
+		uiController.SpawnTextPopupAtPosition(-healthChangedEventArgs.ChangeAmount + " HP",
+			unit.transform.position + new Vector3(0, 0.8f, 0), healthChangedEventArgs.WasCrit ? Color.red : Color.white);
+	}
+	
 	public void OnUnitDeath(Object deadUnit, EventArgs args)
 	{
 		if (deadUnit is not Unit unit)
@@ -267,13 +281,13 @@ public class GameController : MonoBehaviour
 			shortestPathWorldPositions.Add(position);
 		}
 		
-		uiController.SetEnabled(false, unit, RoundCount);
+		uiController.SetInteractablesEnabled(false, unit, RoundCount);
 		unit.StartMove(shortestPathWorldPositions, () => OnUnitMovementComplete(unit, onCompleteCallback));
 	}
 
 	private void OnUnitMovementComplete(Unit unit, Action callback)
 	{
-		uiController.SetEnabled(true, unit, RoundCount);
+		uiController.SetInteractablesEnabled(true, unit, RoundCount);
 		callback?.Invoke();
 	}
 

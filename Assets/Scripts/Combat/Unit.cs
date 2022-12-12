@@ -27,8 +27,6 @@ public class Unit : MonoBehaviour
 
     public MapTile CurrentTile { get; set; }
 
-    public HealthBarUI healthBarUI;
-
     public Texture2D initiativeOrderPortrait;
 
     public GameObject deathEffect;
@@ -47,21 +45,29 @@ public class Unit : MonoBehaviour
 
     private Action onAttackCallback;
     private Action onAttackCompleteCallback;
+    
+    public EventHandler<HealthChangedEventArgs> OnHealthChanged;
 
     public event EventHandler OnDeath;
     
     public void Awake()
     {
         Health = MaxHealth;
-        healthBarUI.SetHealth(Health, MaxHealth);
         weaponLastFiredRoundCount = new Dictionary<string, int>();
         animator = GetComponent<Animator>();
     }
-
-    public void TakeDamage(int amount)
+    
+    public void TakeDamage(int amount, bool wasCrit)
     {
-        Health -= amount;
-        healthBarUI.SetHealth(Health, MaxHealth);
+        int startingHealth = Health;
+        Health = Mathf.Max(0, startingHealth - amount);
+        OnHealthChanged?.Invoke(this, new HealthChangedEventArgs
+        {
+            ChangeAmount = startingHealth - Health,
+            NewValue = Health,
+            MaxHealth = MaxHealth,
+            WasCrit = wasCrit
+        });
         if (Health <= 0)
         {
             OnDeath?.Invoke(this, EventArgs.Empty);
@@ -102,7 +108,8 @@ public class Unit : MonoBehaviour
     
     private void DoAttack(Weapon weapon, Unit target, Action completionCallback)
     {
-        target.TakeDamage(weapon.RollDamage());
+        bool wasCrit;
+        target.TakeDamage(weapon.RollDamage(out wasCrit), wasCrit );
     }
 
     public bool CanUseWeapon(Weapon weapon, int currentRoundCount)
@@ -180,5 +187,14 @@ public class Unit : MonoBehaviour
         MOVING,
         ATTACKING,
         DEFAULT,
+    }
+
+    public class HealthChangedEventArgs : EventArgs
+    {
+        public int ChangeAmount { get; set; }
+        public int NewValue { get; set;  }
+        public int MaxHealth { get; set;  }
+        
+        public bool WasCrit { get; set; }
     }
 }

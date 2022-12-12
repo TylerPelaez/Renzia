@@ -43,6 +43,14 @@ public class UIController : MonoBehaviour
 
     [SerializeField]
     private TextMeshProUGUI attackImpossibleLabel;
+
+    [SerializeField]
+    private GameObject healthBarPrefab;
+    
+    [SerializeField]
+    private GameObject textPopupPrefab;
+
+    private List<HealthBarUI> healthBars;
     
     public event EventHandler OnEndTurnButtonClicked;
     public event EventHandler<Weapon> OnAttackButtonClicked;
@@ -70,6 +78,29 @@ public class UIController : MonoBehaviour
     public void ResetInitiativeOrderUI(LinkedList<Unit> initiativeOrder)
     {
         initiativeOrderUIController.ResetInitiativeOrder(initiativeOrder);
+    }
+
+    public void SetupHealthBars(LinkedList<Unit> units)
+    {
+        if (healthBars != null)
+        {
+            foreach (var healthBar in healthBars)
+            {
+                Destroy(healthBar.gameObject);
+            }
+        }
+
+        healthBars = new List<HealthBarUI>();
+        
+        foreach (var unit in units)
+        {
+            GameObject instantiatedBar = Instantiate(healthBarPrefab, gameObject.transform);
+            instantiatedBar.transform.SetAsFirstSibling();
+            HealthBarUI healthBar = instantiatedBar.GetComponent<HealthBarUI>();
+            healthBar.Initialize(unit, GetComponent<CanvasScaler>(), GetComponent<RectTransform>());
+            
+            healthBars.Add(healthBar);
+        }
     }
 
     public void OnTurnEnded()
@@ -214,7 +245,7 @@ public class UIController : MonoBehaviour
         attackImpossibleLabel.gameObject.SetActive(active);
     }
 
-    public void SetEnabled(bool isEnabled, Unit currentUnit, int roundCount)
+    public void SetInteractablesEnabled(bool isEnabled, Unit currentUnit, int roundCount)
     {
         endTurnButton.interactable = isEnabled;
 
@@ -257,6 +288,12 @@ public class UIController : MonoBehaviour
     public void OnQuitButtonClicked()
     {
         Application.Quit();
+    }
+
+    public void SpawnTextPopupAtPosition(string text, Vector3 position, Color color)
+    {
+        GameObject popup = Instantiate(textPopupPrefab, transform);
+        popup.GetComponent<Popup>().Initialize(text, position, GetComponent<CanvasScaler>(), GetComponent<RectTransform>(), color);
     }
     
     IEnumerator LoadSceneAsync()

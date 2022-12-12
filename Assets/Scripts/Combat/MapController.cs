@@ -148,6 +148,32 @@ public class MapController : MonoBehaviour
         Vector3Int cellPosition = WorldToCell(worldPosition);
         return GetAllTilesInRange(cellPosition, maxDistance, includeStart, includeOccupiedTiles);
     }
+    
+    public List<MapTile> GetAllTilesInAttackRange(Vector3Int cellPosition, int range)
+    {
+        List<MapTile> results = new List<MapTile>();
+        
+        for (int x = cellPosition.x - range; x <= cellPosition.x + range; x++)
+        {
+            for (int y = cellPosition.y - range; y <= cellPosition.y + range; y++)
+            {
+                Vector3Int testPosition = new Vector3Int(x, y, 0);
+                if (testPosition == cellPosition)
+                {
+                    continue;
+                }
+
+                // TODO: Should this be a circular range check?
+                MapTile tile = GetTileAtGridCellPosition(testPosition);
+                if (tile != null && tile.Walkable)
+                {
+                    results.Add(tile);
+                }
+            }
+        }
+
+        return results;
+    }
 
     public MapTile[] GetAdjacentTilesToPosition(Vector3Int cellPosition)
     {
@@ -320,7 +346,7 @@ public class MapController : MonoBehaviour
         Vector3Int attackerPosition = WorldToCell(attacker.transform.position);
         Vector3Int targetPosition = WorldToCell(target.transform.position);
 
-        List<MapTile> tilesInRange = GetAllTilesInRange(attackerPosition, weaponUsed.Range, false, true);
+        List<MapTile> tilesInRange = GetAllTilesInAttackRange(attackerPosition, weaponUsed.Range);
         
         foreach (var tile in tilesInRange)
         {

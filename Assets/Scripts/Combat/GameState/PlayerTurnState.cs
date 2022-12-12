@@ -301,7 +301,7 @@ public class PlayerTurnState : TurnState
         targetableUnits = null;
         cameraController.SmoothMoveToThenUnlock(CurrentUnit);
         uiController.DisableAttackModeOverlay();
-        uiController.ResetActionPanel(CurrentUnit, gameController.RoundCount);
+        uiController.SetInteractablesEnabled(true, CurrentUnit, gameController.RoundCount);
         UpdateMovementIndicators();
     }
 
@@ -312,6 +312,7 @@ public class PlayerTurnState : TurnState
         cameraController.FollowUnit(CurrentUnit);
         uiController.DisableAttackModeOverlay();
         ClearMovementIndicators();
+        uiController.SetInteractablesEnabled(false, CurrentUnit, gameController.RoundCount);
     }
 
     private void EnterWaitingForAttackState(Unit target)
@@ -321,6 +322,7 @@ public class PlayerTurnState : TurnState
         cameraController.FollowUnit(target);
         uiController.DisableAttackModeOverlay();
         ClearMovementIndicators();
+        uiController.SetInteractablesEnabled(false, CurrentUnit, gameController.RoundCount);
     }
 
     private void TargetNextUnit()
@@ -376,8 +378,7 @@ public class PlayerTurnState : TurnState
     {
         ClearAttackRangeIndicators();
 
-        Vector3 unitPos = mapController.CellToWorld(CurrentUnit.CurrentTile.GridPos);
-        List<MapTile> allMapTilesInRange = mapController.GetAllTilesInRange(unitPos, weapon.Range, false, true);
+        List<MapTile> allMapTilesInRange = mapController.GetAllTilesInAttackRange(CurrentUnit.CurrentTile.GridPos, weapon.Range);
         
         Vector3 offset = 2.6f * Vector3.forward;
         foreach (MapTile tile in allMapTilesInRange)

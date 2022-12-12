@@ -85,7 +85,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 846023645993748276, guid: 144d19bd410ca6c4eab875ebef3b6ed7, type: 3}
       propertyPath: m_Name
-      value: EnemyUnit Variant
+      value: EnemyUnit
       objectReference: {fileID: 0}
     - target: {fileID: 846023645993748276, guid: 144d19bd410ca6c4eab875ebef3b6ed7, type: 3}
       propertyPath: m_Layer
@@ -110,6 +110,10 @@ PrefabInstance:
     - target: {fileID: 846023645993748277, guid: 144d19bd410ca6c4eab875ebef3b6ed7, type: 3}
       propertyPath: m_Color.r
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3818819664479310787, guid: 144d19bd410ca6c4eab875ebef3b6ed7, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 4758247428370127378, guid: 144d19bd410ca6c4eab875ebef3b6ed7, type: 3}
       propertyPath: m_Controller

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 [CreateAssetMenu(fileName = "Data", menuName = "ScriptableObjects/Weapon", order = 1)]
 public class Weapon : ScriptableObject
@@ -24,11 +25,10 @@ public class Weapon : ScriptableObject
     
     [field: SerializeField] public Texture2D ActionPanelButtonTexture { get; private set; }
 
-    public int RollDamage()
+    public int RollDamage(out bool wasCrit)
     {
         var random = new System.Random();
-        int damage = random.Next(MinDamage, MaxDamage + 1);
-        bool crit = random.NextDouble() <= CritChance;
-        return crit ? (int) (damage * 1.5f) : damage;
+        wasCrit = random.NextDouble() <= CritChance;
+        return wasCrit ? (int) Mathf.Ceil(MaxDamage * 1.5f) : random.Next(MinDamage, MaxDamage + 1);
     }
 }
