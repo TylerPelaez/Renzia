@@ -301,6 +301,7 @@ public class PlayerTurnState : TurnState
         targetableUnits = null;
         cameraController.SmoothMoveToThenUnlock(CurrentUnit);
         uiController.DisableAttackModeOverlay();
+        uiController.ResetActionPanel(CurrentUnit, gameController.RoundCount);
         UpdateMovementIndicators();
     }
 

@@ -12,7 +12,7 @@ public class Unit : MonoBehaviour
     [field: SerializeField]
     public Weapon[] Weapons { get; private set; }
 
-    private Dictionary<string, int> WeaponLastFiredRoundCount;
+    private Dictionary<string, int> weaponLastFiredRoundCount;
 
     [field: SerializeField]
     public int MaxHealth { get; private set; } = 5;
@@ -31,6 +31,8 @@ public class Unit : MonoBehaviour
 
     public Texture2D initiativeOrderPortrait;
 
+    public GameObject deathEffect;
+    
     private Animator animator;
 
     public float movementSpeedUnitsPerSecond = 1.2f;
@@ -41,10 +43,10 @@ public class Unit : MonoBehaviour
     private int lastMovementDirection = -1;
 
     private UnitState state = UnitState.DEFAULT;
-    private Action OnMovementCompleteCallback;
+    private Action onMovementCompleteCallback;
 
-    private Action OnAttackCallback;
-    private Action OnAttackCompleteCallback;
+    private Action onAttackCallback;
+    private Action onAttackCompleteCallback;
 
     public event EventHandler OnDeath;
     
@@ -52,7 +54,7 @@ public class Unit : MonoBehaviour
     {
         Health = MaxHealth;
         healthBarUI.SetHealth(Health, MaxHealth);
-        WeaponLastFiredRoundCount = new Dictionary<string, int>();
+        weaponLastFiredRoundCount = new Dictionary<string, int>();
         animator = GetComponent<Animator>();
     }
 
@@ -63,18 +65,23 @@ public class Unit : MonoBehaviour
         if (Health <= 0)
         {
             OnDeath?.Invoke(this, EventArgs.Empty);
-            // TODO: stuff on death
+            GameObject deathEffect = Instantiate(this.deathEffect, transform.position, Quaternion.identity);
+            deathEffect.GetComponent<SpriteRenderer>().sprite = GetComponent<SpriteRenderer>().sprite;
             Destroy(gameObject);
+        }
+        else
+        {
+            animator.Play("Hurt");
         }
     }
 
     public void StartAttack(Weapon weapon, Unit target, int currentRoundCount, Action completionCallback)
     {
-        WeaponLastFiredRoundCount[weapon.Name] = currentRoundCount;
+        weaponLastFiredRoundCount[weapon.Name] = currentRoundCount;
         int animationDirection = DirectionUtil.GetAnimationSuffixForDirection(transform.position, target.transform.position);
         
-        OnAttackCallback = () => DoAttack(weapon, target, completionCallback);
-        OnAttackCompleteCallback = () =>
+        onAttackCallback = () => DoAttack(weapon, target, completionCallback);
+        onAttackCompleteCallback = () =>
         {
             completionCallback?.Invoke();
             animator.Play("Idle" + animationDirection);
@@ -85,12 +92,12 @@ public class Unit : MonoBehaviour
 
     public void Attack()
     {
-        OnAttackCallback?.Invoke();
+        onAttackCallback?.Invoke();
     }
 
     public void AttackAnimationComplete()
     {
-        OnAttackCompleteCallback?.Invoke();
+        onAttackCompleteCallback?.Invoke();
     }
     
     private void DoAttack(Weapon weapon, Unit target, Action completionCallback)
@@ -100,14 +107,14 @@ public class Unit : MonoBehaviour
 
     public bool CanUseWeapon(Weapon weapon, int currentRoundCount)
     {
-        return !WeaponLastFiredRoundCount.ContainsKey(weapon.Name) || currentRoundCount - WeaponLastFiredRoundCount[weapon.Name] >= weapon.TurnCooldown;
+        return !weaponLastFiredRoundCount.ContainsKey(weapon.Name) || currentRoundCount - weaponLastFiredRoundCount[weapon.Name] >= weapon.TurnCooldown;
     }
 
     public void StartMove(List<Vector3> path, Action onComplete)
     {
         movementList = new LinkedList<Vector3>(path);
         state = UnitState.MOVING;
-        OnMovementCompleteCallback = onComplete;
+        onMovementCompleteCallback = onComplete;
         CurrentMovementFinished();
     }
 
@@ -153,7 +160,7 @@ public class Unit : MonoBehaviour
         {
             state = UnitState.DEFAULT;
             animator.Play("Idle" + (lastMovementDirection < 0 ? 3 : lastMovementDirection));
-            OnMovementCompleteCallback?.Invoke();
+            onMovementCompleteCallback?.Invoke();
             return;
         }
 

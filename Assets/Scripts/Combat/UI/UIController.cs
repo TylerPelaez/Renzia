@@ -88,7 +88,7 @@ public class UIController : MonoBehaviour
         }
     }
 
-    private void ResetActionPanel(Unit currentUnit, int roundCount)
+    public void ResetActionPanel(Unit currentUnit, int roundCount)
     {
         foreach (Transform child in actionPanel.transform)
         {

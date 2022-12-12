@@ -143,6 +143,8 @@ MonoBehaviour:
   <Team>k__BackingField: 0
   healthBarUI: {fileID: 5681152040917701054}
   initiativeOrderPortrait: {fileID: 2800000, guid: 7afac1e25368c0a479a74f8fe041da7d, type: 3}
+  DeathEffect: {fileID: 1104388744162002455, guid: 3ffea3c964304a142ab589456c7f4a32, type: 3}
+  movementSpeedUnitsPerSecond: 1.2
 --- !u!95 &4758247428370127378
 Animator:
   serializedVersion: 4
