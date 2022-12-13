@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using Util;
 
 public class PlayerTurnState : TurnState
 {
-    private const int STARTING_ACTION_POINTS = 2;
+    private const int STARTING_ACTION_POINTS = 3;
     private const int MAX_ACTION_POINTS = 4;
-
     private const int DASH_ACTION_POINT_COST = 1;
 
     private static readonly Color MOVEMENT_INDICATOR_COLOR =  new(0.714f, 0.631f, 0.278f, 1f);
@@ -22,6 +20,7 @@ public class PlayerTurnState : TurnState
     private Dictionary<Vector3Int, MapTile> tilesInDashRange;
     private Vector3Int currentlyHoveredTilePosition;
     private GameObject movementActionPointCostIndicator;
+    private List<GameObject> movementActionPointCollectionIndicators;
 
     private Dictionary<Vector3Int, GameObject> attackRangeIndicators;
 
@@ -109,7 +108,6 @@ public class PlayerTurnState : TurnState
         ClearMovementIndicators();
 
         Vector3 unitPos = mapController.CellToWorld(CurrentUnit.CurrentTile.GridPos);
-        Vector3 offset = 2.5f * Vector3.forward;
         movementIndicators = new Dictionary<Vector3Int, GameObject>();
         if (movementPool > 0)
         {
@@ -118,7 +116,7 @@ public class PlayerTurnState : TurnState
         
             foreach (MapTile tile in allMapTilesInMoveRange)
             {
-                GameObject indicator = GameObject.Instantiate(AddressablesManager.Instance.Get("MovementIndicator"), mapController.CellToWorld(tile.GridPos) + offset, Quaternion.identity);
+                GameObject indicator = GameObject.Instantiate(AddressablesManager.Instance.Get("MovementIndicator"), mapController.CellToWorld(tile.GridPos), Quaternion.identity);
                 movementIndicators[tile.GridPos] = indicator;
                 tilesInMovementRange[tile.GridPos] = tile;
             
@@ -144,7 +142,7 @@ public class PlayerTurnState : TurnState
                 continue;
             }
 
-            GameObject indicator = GameObject.Instantiate(AddressablesManager.Instance.Get("MovementIndicator"), mapController.CellToWorld(tile.GridPos) + offset, Quaternion.identity);
+            GameObject indicator = GameObject.Instantiate(AddressablesManager.Instance.Get("MovementIndicator"), mapController.CellToWorld(tile.GridPos), Quaternion.identity);
             movementIndicators[tile.GridPos] = indicator;
             tilesInDashRange[tile.GridPos] = tile;
             
@@ -169,6 +167,16 @@ public class PlayerTurnState : TurnState
         {
             GameObject.Destroy(movementActionPointCostIndicator);
         }
+
+        if (movementActionPointCollectionIndicators != null)
+        {
+            foreach (var indicator in movementActionPointCollectionIndicators)
+            {
+                GameObject.Destroy(indicator);
+            }
+        }
+
+        movementActionPointCollectionIndicators = new List<GameObject>();
 
         currentlyHoveredTilePosition = new Vector3Int(Int32.MaxValue, Int32.MaxValue, Int32.MaxValue);
     }
@@ -201,17 +209,60 @@ public class PlayerTurnState : TurnState
                 GameObject.Destroy(movementActionPointCostIndicator);
             }
 
-            if (needsToDash)
+            if (movementActionPointCollectionIndicators != null)
             {
-                movementActionPointCostIndicator = GameObject.Instantiate(
-                    AddressablesManager.Instance.Get("MovementCostIndicator"), mapController.CellToWorld(mouseCellPosition), Quaternion.identity);
+                foreach (var indicator in movementActionPointCollectionIndicators)
+                {
+                    GameObject.Destroy(indicator);
+                }
             }
+
+            movementActionPointCollectionIndicators = new List<GameObject>();
 
             List<Vector3Int> pathToHoveredTile = mapController.GetShortestPath(CurrentUnit.CurrentTile.GridPos, mouseCellPosition);
             Dictionary<Vector3Int, int> tilesInPath = new Dictionary<Vector3Int, int>(pathToHoveredTile.Count);
+
+            bool foundFirstDashPosition = false;
+            Vector3Int firstDashPosition = Vector3Int.zero;
+            Vector3Int lastMovementTileBeforeDash = Vector3Int.zero;
+
+            Dictionary<Vector3Int, Vector3Int> firstCollectedPositionsBySourcePositions = new Dictionary<Vector3Int, Vector3Int>();
+
             for (int i = 0; i < pathToHoveredTile.Count; i++)
             {
-                tilesInPath[pathToHoveredTile[i]] = i;
+                Vector3Int cellPosition = pathToHoveredTile[i];
+                tilesInPath[cellPosition] = i;
+                if (!foundFirstDashPosition && tilesInDashRange.ContainsKey(cellPosition))
+                {
+                    firstDashPosition = cellPosition;
+                    // at i == 0, it's the unit's current position, which should not be in tilesInDashRange, so we can't get indexoutofbounds
+                    lastMovementTileBeforeDash = pathToHoveredTile[i - 1];
+                    foundFirstDashPosition = true;
+                }
+
+                MapTile tile = mapController.GetTileAtGridCellPosition(cellPosition);
+                if (tile.ActionPointsGainedOnEntry > 0 && tile.ActionPointSource != null && !firstCollectedPositionsBySourcePositions.ContainsKey(tile.ActionPointSource.GridPos))
+                {
+                    firstCollectedPositionsBySourcePositions[tile.ActionPointSource.GridPos] = cellPosition;
+                }
+            }
+            
+            if (needsToDash && foundFirstDashPosition)
+            {
+                Vector3 position = Vector3.Lerp(mapController.CellToWorld(lastMovementTileBeforeDash), mapController.CellToWorld(firstDashPosition), 0.5f);
+                movementActionPointCostIndicator = GameObject.Instantiate(AddressablesManager.Instance.Get("MovementCostIndicator"), position , Quaternion.identity);
+                movementActionPointCostIndicator.GetComponent<CostIndicator>().SetText("-" + DASH_ACTION_POINT_COST + " AP", Color.red);
+            }
+
+            foreach (var (sourcePosition, firstEncounterPos) in firstCollectedPositionsBySourcePositions)
+            {
+                GameObject indicator = GameObject.Instantiate(AddressablesManager.Instance.Get("MovementCostIndicator"), mapController.CellToWorld(firstEncounterPos), Quaternion.identity);
+                CostIndicator text = indicator.GetComponent<CostIndicator>();
+                text.SetText(
+                    "+" + mapController.GetTileAtGridCellPosition(firstEncounterPos).ActionPointsGainedOnEntry + " AP",
+                    Color.white);
+                
+                movementActionPointCollectionIndicators.Add(indicator);
             }
             
             foreach (var pair in movementIndicators)
@@ -288,10 +339,6 @@ public class PlayerTurnState : TurnState
             ClearMovementIndicators();
             uiController.InitializeAttackModeOverlay(targetableUnits, targetableUnits[0], weapon);
             SetCurrentlyTargetedUnit(targetableUnits[0]);
-            if (movementActionPointCostIndicator != null)
-            {
-                GameObject.Destroy(movementActionPointCostIndicator);
-            }
         }
     }
 
@@ -485,7 +532,23 @@ public class PlayerTurnState : TurnState
         if (unit.Team == Team.ENEMY)
         {
             ActionPoints++;
+            gameController.RunAfterDelay(
+                () => uiController.SpawnTextPopupAtPosition("+1 AP",
+                    CurrentUnit.transform.position + new Vector3(0f, 0.8f, 0f), Color.white), 0.8f);
             uiController.OnPlayerActionTaken(actionPoints, CurrentUnit, gameController.RoundCount);
+        }
+    }
+
+    public void AddActionPoints(int amount)
+    {
+        ActionPoints += amount;
+        if (CurrentUnit == null)
+        {
+            uiController.SetActionPointLabel(ActionPoints);
+        }
+        else
+        {
+            uiController.OnPlayerActionTaken(ActionPoints, CurrentUnit, gameController.RoundCount);
         }
     }
 

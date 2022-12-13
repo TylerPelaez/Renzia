@@ -5,6 +5,9 @@ using Object = System.Object;
 public class HealthBarUI : MonoBehaviour
 {
     private static readonly Vector2 HEALTH_BAR_OFFSET = new (0, 20);
+
+    [SerializeField]
+    private GameObject horizontalLayout;
     
     public GameObject healthBarItemPrefab;
 
@@ -45,17 +48,17 @@ public class HealthBarUI : MonoBehaviour
             return;
         }
         
-        foreach (Transform child in gameObject.transform)
+        foreach (Transform child in horizontalLayout.transform)
         {
             Destroy(child.gameObject);
         }
 
         for (int i = 0; i < current; i++)
         {
-            Instantiate(healthBarItemPrefab, transform);
+            Instantiate(healthBarItemPrefab, horizontalLayout.transform);
         }
         
-        LayoutRebuilder.ForceRebuildLayoutImmediate(GetComponent<RectTransform>());
+        LayoutRebuilder.ForceRebuildLayoutImmediate(horizontalLayout.GetComponent<RectTransform>());
     }
 
     private void OnDestroy()

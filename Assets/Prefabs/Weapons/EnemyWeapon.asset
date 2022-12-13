@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e31b202fe9e44deeb8d7e2efb520611a, type: 3}
-  m_Name: Rifle
+  m_Name: EnemyWeapon
   m_EditorClassIdentifier: 
-  <Name>k__BackingField: Rifle
-  <MinDamage>k__BackingField: 3
-  <MaxDamage>k__BackingField: 5
-  <Range>k__BackingField: 6
-  <CritChance>k__BackingField: 0.1
+  <Name>k__BackingField: EnemyWeapon
+  <MinDamage>k__BackingField: 1
+  <MaxDamage>k__BackingField: 3
+  <Range>k__BackingField: 5
+  <CritChance>k__BackingField: 0
   <ActionPointCost>k__BackingField: 1
   <TurnCooldown>k__BackingField: 1
   <ActionPanelButtonTexture>k__BackingField: {fileID: 2800000, guid: 0319cd99d02cf1547ba4e6bb6ed5ae21, type: 3}

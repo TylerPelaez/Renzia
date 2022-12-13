@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2333482576827158718}
   - component: {fileID: 2333482576827158719}
   - component: {fileID: 6644542680651116683}
+  - component: {fileID: -9089960539333499227}
   m_Layer: 0
   m_Name: MovementIndicator
   m_TagString: Untagged
@@ -75,7 +76,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: f50b75d626aa95248b2e5efc68cd520e, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.4627451}
+  m_Color: {r: 0.79607844, g: 0.76862746, b: 0.7294118, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -140,3 +141,15 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   growTime: 0.3
+--- !u!114 &-9089960539333499227
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2333482576827158712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2385514dfbfc12c478bfd94a439f531e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -11,8 +11,9 @@ GameObject:
   - component: {fileID: 3477827729175326020}
   - component: {fileID: 9116602952663195876}
   - component: {fileID: 5360824389044463844}
-  - component: {fileID: 1773548073119363301}
-  - component: {fileID: 7948913045959818191}
+  - component: {fileID: 7178468040759355270}
+  - component: {fileID: 7404959764541885652}
+  - component: {fileID: 5220025904725939504}
   m_Layer: 5
   m_Name: HealthBar
   m_TagString: Untagged
@@ -60,8 +61,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e63aa218e1443c43943982ee079264a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  horizontalLayout: {fileID: 2299733698948907049}
   healthBarItemPrefab: {fileID: 6728665691603103913, guid: 1a7964592c76f7245be5658307675b44, type: 3}
---- !u!114 &1773548073119363301
+--- !u!114 &7178468040759355270
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2299733698948907049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.79607844, g: 0.76862746, b: 0.7294118, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7404959764541885652
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -74,12 +106,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 0
-    m_Right: 0
-    m_Top: 0
-    m_Bottom: 0
+    m_Left: 1
+    m_Right: 1
+    m_Top: 1
+    m_Bottom: 1
   m_ChildAlignment: 4
-  m_Spacing: 0.5
+  m_Spacing: 1
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
@@ -87,7 +119,7 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!114 &7948913045959818191
+--- !u!114 &5220025904725939504
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

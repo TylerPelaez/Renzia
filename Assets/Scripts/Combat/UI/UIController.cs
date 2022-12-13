@@ -50,6 +50,10 @@ public class UIController : MonoBehaviour
     [SerializeField]
     private GameObject textPopupPrefab;
 
+    [SerializeField]
+    private GameObject actionPointIndicatorPrefab; 
+
+    
     private List<HealthBarUI> healthBars;
     
     public event EventHandler OnEndTurnButtonClicked;
@@ -278,6 +282,8 @@ public class UIController : MonoBehaviour
         {
             missionOutcomeLabel.text = "Defeat";
         }
+        missionOutcomePanel.transform.SetAsLastSibling();
+        Time.timeScale = 0;
     }
 
     public void OnRestartButtonClicked()
@@ -295,7 +301,14 @@ public class UIController : MonoBehaviour
         GameObject popup = Instantiate(textPopupPrefab, transform);
         popup.GetComponent<Popup>().Initialize(text, position, GetComponent<CanvasScaler>(), GetComponent<RectTransform>(), color);
     }
-    
+
+    public GameObject SpawnCollectibleActionPointIndicator(int collectibleActionPoints, Vector3 position)
+    {
+        GameObject indicator = Instantiate(actionPointIndicatorPrefab, position, Quaternion.identity);
+        indicator.GetComponent<CollectibleActionPointIndicator>().Initialize(collectibleActionPoints, position, GetComponent<CanvasScaler>(), GetComponent<RectTransform>(), mapController);
+        return indicator;
+    }
+
     IEnumerator LoadSceneAsync()
     {
 

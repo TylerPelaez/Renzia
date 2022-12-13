@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,7 +12,17 @@ public class Popup : MonoBehaviour
     private RectTransform canvasTransform;
     private RectTransform rectTransform;
     private CanvasScaler canvasScaler;
-    
+
+    [SerializeField] private Type type;
+
+    private void Start()
+    {
+        if (type == Type.FLOATING)
+        {
+            GetComponent<Animator>().Play("FloatingText");
+        }
+    }
+
     public void Initialize(string text, Vector3 startingWorldPosition, CanvasScaler scaler, RectTransform canvas, Color color)
     {
         TextMeshProUGUI textMesh = GetComponent<TextMeshProUGUI>();
@@ -36,5 +47,10 @@ public class Popup : MonoBehaviour
     {
         Destroy(gameObject);
     }
-    
+
+    public enum Type
+    {
+        RISE_AND_DELETE,
+        FLOATING,
+    }
 }

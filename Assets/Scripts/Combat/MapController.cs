@@ -3,14 +3,20 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using Util;
+using Object = System.Object;
 
 public class MapController : MonoBehaviour
 {
     public Grid grid;
     public GameController gameController;
     public CameraController cameraController;
+    public UIController uiController;
+    
     private Tilemap[] tilemaps;
     private Dictionary<Vector3Int, MapTile> map;
+    private Dictionary<Vector3Int, int> actionPointRegenPositions;
+
+    public EventHandler OnMapStateChanged;
 
     Vector3Int minBounds = new Vector3Int();
     Vector3Int maxBounds = new Vector3Int();
@@ -48,6 +54,8 @@ public class MapController : MonoBehaviour
         map = new Dictionary<Vector3Int, MapTile>();
         //[Mathf.Abs(maxBounds.x - minBounds.x), Mathf.Abs(maxBounds.y - minBounds.y), Mathf.Abs(maxBounds.z - minBounds.z)];
 
+        actionPointRegenPositions = new Dictionary<Vector3Int, int>();
+
         for (int i = 0; i < tilemaps.Length; i++)
         {
             Tilemap tilemap = tilemaps[i];
@@ -62,12 +70,26 @@ public class MapController : MonoBehaviour
                 {
                     continue;
                 }
+
+                
                 bool walkable = nextTilemap != null && !nextTilemap.HasTile(new Vector3Int(position.x, position.y, position.z + 1));
                 MapTile tile = new MapTile(position, walkable, tilemap);
                 map[new Vector3Int(position.x, position.y, position.z)] = tile;
+                
+                
+                TileBase tilemapTile = tilemap.GetTile(position);
+                if (tilemapTile is TileWrapper wrapper)
+                {
+                    if (wrapper.AdjacentTilesActionPointRegenAmount > 0)
+                    {
+                        actionPointRegenPositions[position - Vector3Int.forward] = wrapper.AdjacentTilesActionPointRegenAmount;
+                    }
+                }
             }
         }
         
+        ResetTileActionPoints();
+
         cameraController.Bounds = GetWorldBounds();
 
         Unit[] units = FindObjectsOfType<Unit>();
@@ -120,7 +142,8 @@ public class MapController : MonoBehaviour
 
     public Vector3 CellToWorld(Vector3Int cellPos)
     {
-        return grid.CellToWorld(cellPos) + new Vector3(0f, 0.25f, 0f);
+        // I don't know why the offset is necessary, but it does help 
+        return grid.CellToWorld(cellPos) + new Vector3(0f, 0.26f, 0f);
     }
 
     public List<MapTile> GetAllTilesInRange(Vector3Int cellPosition, int maxDistance, bool includeStart, bool includeOccupiedTiles)
@@ -175,17 +198,41 @@ public class MapController : MonoBehaviour
         return results;
     }
 
-    public MapTile[] GetAdjacentTilesToPosition(Vector3Int cellPosition)
+    public List<MapTile> GetAdjacentTilesToPosition(Vector3Int cellPosition)
     {
-        MapTile[] tiles = new MapTile[8];
-        tiles[0] = GetTileAtGridCellPosition(cellPosition + Vector3Int.left);
-        tiles[1] = GetTileAtGridCellPosition(cellPosition + Vector3Int.down);
-        tiles[2] = GetTileAtGridCellPosition(cellPosition + Vector3Int.right);
-        tiles[3] = GetTileAtGridCellPosition(cellPosition + Vector3Int.up);
-        tiles[4] = GetTileAtGridCellPosition(cellPosition + Vector3Int.left + Vector3Int.down);
-        tiles[5] = GetTileAtGridCellPosition(cellPosition + Vector3Int.right + Vector3Int.down);
-        tiles[6] = GetTileAtGridCellPosition(cellPosition + Vector3Int.left + Vector3Int.up);
-        tiles[7] = GetTileAtGridCellPosition(cellPosition + Vector3Int.right + Vector3Int.up);
+        List<MapTile> tiles = new List<MapTile>();
+        MapTile tile = GetTileAtGridCellPosition(cellPosition + Vector3Int.left);
+        if (tile != null)
+            tiles.Add(tile);
+        
+        tile = GetTileAtGridCellPosition(cellPosition + Vector3Int.down);
+        if (tile != null)
+            tiles.Add(tile);
+        
+        tile = GetTileAtGridCellPosition(cellPosition + Vector3Int.right);
+        if (tile != null)
+            tiles.Add(tile);
+        
+        tile = GetTileAtGridCellPosition(cellPosition + Vector3Int.up);
+        if (tile != null)
+            tiles.Add(tile);
+        
+        tile = GetTileAtGridCellPosition(cellPosition + Vector3Int.left + Vector3Int.down);
+        if (tile != null)
+            tiles.Add(tile);
+        
+        tile = GetTileAtGridCellPosition(cellPosition + Vector3Int.right + Vector3Int.down);
+        if (tile != null)
+            tiles.Add(tile);
+        
+        tile = GetTileAtGridCellPosition(cellPosition + Vector3Int.left + Vector3Int.up);
+        if (tile != null)
+            tiles.Add(tile);
+        
+        tile = GetTileAtGridCellPosition(cellPosition + Vector3Int.right + Vector3Int.up);
+        if (tile != null)
+            tiles.Add(tile);
+        
         return tiles;
     }
 
@@ -206,11 +253,11 @@ public class MapController : MonoBehaviour
             {
                 MapTile currentTile = currentDistanceQueue.Dequeue();
                 
-                MapTile[] testTiles = GetAdjacentTilesToPosition(currentTile.GridPos);
+                List<MapTile> testTiles = GetAdjacentTilesToPosition(currentTile.GridPos);
 
                 foreach (MapTile test in testTiles)
                 {
-                    if (test != null && test.Walkable && !visited.Contains(test.GridPos) && (occupiedTilesAreWalkable || test.CurrentUnit == null))
+                    if (test.Walkable && !visited.Contains(test.GridPos) && (occupiedTilesAreWalkable || test.CurrentUnit == null))
                     {
                         nextDistanceQueue.Enqueue(test);
                         visited.Add(test.GridPos);
@@ -238,7 +285,7 @@ public class MapController : MonoBehaviour
     /***
      *  Given a tile map cell position, return the MapTile contained in the map 3d array 
      */
-    private MapTile GetTileAtGridCellPosition(Vector3Int gridCellPosition)
+    public MapTile GetTileAtGridCellPosition(Vector3Int gridCellPosition)
     {
         return map.ContainsKey(gridCellPosition) ? map[gridCellPosition] : null;
     }
@@ -286,7 +333,7 @@ public class MapController : MonoBehaviour
             var adjacentTiles = GetAdjacentTilesToPosition(current);
             foreach (var tile in adjacentTiles)
             {
-                if (tile == null || !tile.Walkable || tile.CurrentUnit != null)
+                if (!tile.Walkable || tile.CurrentUnit != null)
                 {
                     continue;
                 }
@@ -359,12 +406,43 @@ public class MapController : MonoBehaviour
         return false;
     }
 
-    public void InitializeUnit(Unit unit)
+    private void InitializeUnit(Unit unit)
     {
         Vector3Int unitPosition = WorldToCell(unit.transform.position);
         MapTile tile = map[unitPosition];
         tile.CurrentUnit = unit;
         unit.CurrentTile = tile;
+        unit.OnTileEntered += OnUnitEnteredTile;
+    }
+
+    public void ResetTileActionPoints()
+    {
+        foreach (var (position, actionPointsGained) in actionPointRegenPositions)
+        {
+            List<MapTile> adjacentTiles = GetAdjacentTilesToPosition(position);
+            Unit unitCollectingAPImmediately = null;
+            foreach (var tile in adjacentTiles)
+            {
+                tile.ActionPointsGainedOnEntry = actionPointsGained;
+                tile.ActionPointSource = map[position];
+
+                if (tile.CurrentUnit != null && tile.CurrentUnit.Team == Team.PLAYER)
+                {
+                    unitCollectingAPImmediately = tile.CurrentUnit;
+                }
+            }
+
+            if (map[position].CollectibleActionPointIndicator == null)
+            {
+                Vector3 worldPos = CellToWorld(position);
+                map[position].CollectibleActionPointIndicator = uiController.SpawnCollectibleActionPointIndicator(actionPointsGained, worldPos);
+            }
+
+            if (unitCollectingAPImmediately != null)
+            {
+                OnUnitEnteredTile(unitCollectingAPImmediately, unitCollectingAPImmediately.transform.position);
+            }
+        }
     }
 
     public void MoveUnit(Unit unit, Vector3Int newPosition)
@@ -374,6 +452,37 @@ public class MapController : MonoBehaviour
         MapTile newTile = map[newPosition];
         newTile.CurrentUnit = unit;
         unit.CurrentTile = newTile;
+        OnMapStateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void OnUnitEnteredTile(Object caller, Vector3 worldPosition)
+    {
+        if (caller is not Unit unit)
+        {
+            Debug.LogError("OnUnitEnteredTile did not receive Unit");
+            return;
+        }
+
+        if (unit.Team != Team.PLAYER)
+        {
+            return;
+        }
+
+        Vector3Int mapPosition = WorldToCell(worldPosition);
+        MapTile tile = GetTileAtGridCellPosition(mapPosition);
+        if (tile.ActionPointsGainedOnEntry > 0)
+        {
+            int actionPointsGained = tile.ActionPointsGainedOnEntry;
+            gameController.AddActionPoints(actionPointsGained);
+            MapTile actionPointSource = tile.ActionPointSource;
+            List<MapTile> adjacentMapTiles = GetAdjacentTilesToPosition(actionPointSource.GridPos);
+            foreach (var adjacentTile in adjacentMapTiles)
+            {
+                adjacentTile.ActionPointsGainedOnEntry = 0;
+            }
+            
+            Destroy(actionPointSource.CollectibleActionPointIndicator);
+        }
     }
 
     public void OnUnitDeath(Unit unit)
@@ -381,6 +490,7 @@ public class MapController : MonoBehaviour
         MapTile currentTile = unit.CurrentTile;
         currentTile.CurrentUnit = null;
         unit.CurrentTile = null;
+        OnMapStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public Bounds GetWorldBounds()

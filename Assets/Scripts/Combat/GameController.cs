@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Util;
@@ -27,7 +28,9 @@ public class GameController : MonoBehaviour
 	public MissionObjective Objective { get; private set; } = MissionObjective.KILL_ALL_ENEMIES;
 
 	void Start()
-    {
+	{
+		Time.timeScale = 1;
+	    
 	    Screen.SetResolution(1920,1080,true);
 	    stateMachine.Add(new PlayerTurnState(mapController, uiController, this, cameraController));
 		stateMachine.Add(new EnemyTurnState(mapController, this));
@@ -94,6 +97,7 @@ public class GameController : MonoBehaviour
 		if (finishedUnit == roundStartPreviousUnit && GetCurrentTurnUnit() == roundStartNextUnit)
 		{
 			RoundCount++;
+			mapController.ResetTileActionPoints();
 		}
 
 		stateMachine.SetCurrentState(GameState.TRANSITION);
@@ -294,5 +298,21 @@ public class GameController : MonoBehaviour
 	public int GetPlayerActionPoints()
 	{
 		return ((PlayerTurnState)stateMachine.GetState(GameState.PLAYER_TURN)).ActionPoints;
+	}
+
+	public void AddActionPoints(int amount)
+	{
+		((PlayerTurnState)stateMachine.GetState(GameState.PLAYER_TURN)).AddActionPoints(amount);
+	}
+	
+	public void RunAfterDelay(Action runnable, float delaySeconds)
+	{
+		StartCoroutine(DelayThenRun(runnable, delaySeconds));
+	}
+
+	private IEnumerator DelayThenRun(Action runnable, float delaySeconds)
+	{
+		yield return new WaitForSeconds(delaySeconds);
+		runnable.Invoke();
 	}
 }

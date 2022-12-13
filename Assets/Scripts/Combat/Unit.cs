@@ -47,6 +47,7 @@ public class Unit : MonoBehaviour
     private Action onAttackCompleteCallback;
     
     public EventHandler<HealthChangedEventArgs> OnHealthChanged;
+    public EventHandler<Vector3> OnTileEntered;
 
     public event EventHandler OnDeath;
     
@@ -162,6 +163,8 @@ public class Unit : MonoBehaviour
     private void CurrentMovementFinished()
     { 
         movementCurrentPosition = movementList.First.Value;
+        OnTileEntered?.Invoke(this, movementCurrentPosition);
+        
         movementList.RemoveFirst();
         if (movementList.Count == 0)
         {
